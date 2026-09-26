@@ -1,0 +1,23 @@
+{
+  "name": "watchlist-maker",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.116.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-router-dom": "^7.18.4"
+  },
+  "devDependencies": {
+    "vitest": "^5.0.1",
+    "vite": "^8.3.0",
+    "@vitejs/plugin-react": "^6.1.1"
+  }
+}

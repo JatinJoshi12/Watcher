@@ -1,0 +1,21 @@
+{
+  "id": "/",
+  "name": "Watcher",
+  "short_name": "Watcher",
+  "description": "Discover and organize movies and web series.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "background_color": "#07080b",
+  "theme_color": "#07080b",
+  "orientation": "any",
+  "icons": [
+    {"src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+    {"src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+  ],
+  "shortcuts": [
+    {"name": "My Watch List", "short_name": "Watch List", "url": "/watchlists", "icons": [{"src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png"}]},
+    {"name": "Discover", "short_name": "Discover", "url": "/discover", "icons": [{"src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png"}]}
+  ]
+}
