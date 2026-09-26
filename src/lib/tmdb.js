@@ -311,11 +311,6 @@ export async function getRecentTrailers() {
     .slice(0, 30)
 }
 
-export async function getExternalIds(id, type = 'movie') {
-  const endpoint = type === 'series' ? `/tv/${id}/external_ids` : `/movie/${id}/external_ids`
-  return request(endpoint)
-}
-
 export async function getTitleDetails(id, type = 'movie') {
   const endpoint = type === 'series' ? `/tv/${id}` : `/movie/${id}`
   const data = await request(endpoint)

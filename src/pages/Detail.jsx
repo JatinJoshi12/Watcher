@@ -5,7 +5,6 @@ import Poster from '../components/Poster'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { Icon } from '../components/Icon'
 import { titleCaseText } from '../lib/utils'
-import StreamSourcePanel from '../components/StreamSourcePanel'
 
 export default function Detail({ notify }) {
   const { watchlistId, itemId } = useParams()
@@ -66,8 +65,6 @@ export default function Detail({ notify }) {
             </div>
 
             {genres.length ? <div className="watcher-detail-genres">{genres.map((genre) => <span key={genre}>{genre}</span>)}</div> : null}
-
-            <StreamSourcePanel item={item} notify={notify} />
 
             <section className="watcher-story-section">
               <span className="watcher-kicker">STORY</span>

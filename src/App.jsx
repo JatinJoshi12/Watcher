@@ -17,7 +17,6 @@ import Signup from './pages/Signup'
 import ResetPassword from './pages/ResetPassword'
 import NotFound from './pages/NotFound'
 import Settings from './pages/Settings'
-import AddonManager from './pages/AddonManager'
 import Profile from './pages/Profile'
 import Stats from './pages/Stats'
 import PublicProfile from './pages/PublicProfile'
@@ -128,7 +127,6 @@ function AppContent() {
         <Route path="/discover" element={page(<Discover notify={notify} />)} />
         <Route path="/watchlists" element={page(<Watchlists notify={notify} />)} />
         <Route path="/settings" element={page(<Settings notify={notify} />)} />
-        <Route path="/addons" element={page(<AddonManager notify={notify} />)} />
         <Route path="/profile" element={page(<Profile />)} />
         <Route path="/stats" element={page(<Stats />)} />
         <Route path="/users/:userId" element={page(<PublicProfile />)} />

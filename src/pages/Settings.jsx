@@ -72,10 +72,6 @@ export default function Settings({ notify }) {
         <section className="watcher-settings-title">
           <span className="watcher-kicker">YOUR SPACE</span>
           <h1>Make It Yours.</h1>
-          <button type="button" className="watcher-secondary-button" onClick={() => navigate('/addons')}>
-            <Icon name="play" size={15} />
-            Manage Stream Addons
-          </button>
         </section>
 
         <form className="watcher-settings-card" onSubmit={save}>

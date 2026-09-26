@@ -40,9 +40,6 @@ export default function Layout({ children }) {
               <Icon name="chart" size={18} />
               <span>Features</span>
             </button>
-            <button className="watcher-settings-button" onClick={() => navigate('/addons')} aria-label="Open Stream Addons" title="Stream Addons">
-              <Icon name="play" size={18} />
-            </button>
             <button className="watcher-settings-button" onClick={() => navigate('/settings')} aria-label="Open Settings" title="Settings">
               <Icon name="settings" size={18} />
             </button>

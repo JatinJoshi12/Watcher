@@ -2,7 +2,7 @@ import Poster from './Poster'
 import { Icon } from './Icon'
 import { formatGenre, labelType, titleCaseText } from '../lib/utils'
 
-export default function WatchlistCard({ item, onDelete, onToggleStatus, onOpenDetails, onPlay, busyId }) {
+export default function WatchlistCard({ item, onDelete, onToggleStatus, onOpenDetails, busyId }) {
   const busy = busyId === item.id
   const statusLabel = item.status === 'watched' ? 'Watched' : 'Unwatched'
   const genreText = formatGenre(item.genre)
@@ -25,10 +25,6 @@ export default function WatchlistCard({ item, onDelete, onToggleStatus, onOpenDe
         </div>
         <div className="watcher-saved-genre">{genreText || 'Genre Not Added'}</div>
         <div className="watcher-saved-actions">
-          <button className="watcher-status-action watcher-stream-action" onClick={() => onPlay?.(item)} disabled={busy}>
-            <Icon name="play" size={14} />
-            Stream
-          </button>
           <button className="watcher-status-action" onClick={() => onToggleStatus(item)} disabled={busy}>
             <Icon name="check" size={14} />
             {item.status === 'watched' ? 'Mark Unwatched' : 'Mark Watched'}
