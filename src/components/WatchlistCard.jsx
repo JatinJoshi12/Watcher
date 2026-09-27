@@ -25,15 +25,14 @@ export default function WatchlistCard({ item, onDelete, onToggleStatus, onOpenDe
         </div>
         <div className="watcher-saved-genre">{genreText || 'Genre Not Added'}</div>
         <div className="watcher-saved-actions">
+          <button className="watcher-stream-card-action" onClick={() => onStream?.(item)} disabled={busy} aria-label={`Stream ${item.title}`}>
+            <Icon name="play" size={13} />
+            Stream
+          </button>
           <button className="watcher-status-action" onClick={() => onToggleStatus(item)} disabled={busy}>
             <Icon name="check" size={14} />
             {item.status === 'watched' ? 'Mark Unwatched' : 'Mark Watched'}
           </button>
-          {onStream ? (
-            <button className="watcher-square-action watcher-stream-card-action" onClick={() => onStream(item)} aria-label={`Stream ${item.title}`} title={`Stream ${item.title}`} disabled={busy}>
-              <Icon name="play" size={16} />
-            </button>
-          ) : null}
           <button className="watcher-square-action watcher-view-action" onClick={() => onOpenDetails(item)} aria-label={`View ${item.title}`} disabled={busy}>
             <Icon name="eye" size={16} />
           </button>

@@ -1,7 +1,7 @@
 import { Icon } from './Icon'
 import { titleCaseText } from '../lib/utils'
 
-export default function TitlePreviewModal({ item, onClose, onAdd, onStream }) {
+export default function TitlePreviewModal({ item, onClose, onAdd }) {
   if (!item) return null
 
   const typeLabel = item.type === 'series' ? 'Web Series' : 'Movie'
@@ -47,14 +47,8 @@ export default function TitlePreviewModal({ item, onClose, onAdd, onStream }) {
         </section>
 
         <div className="watcher-title-preview-actions">
-          {onStream ? (
-            <button className="watcher-primary-button watcher-preview-stream-button" onClick={() => onStream(item)}>
-              <Icon name="play" size={16} />
-              Stream Now
-            </button>
-          ) : null}
           {onAdd ? (
-            <button className="watcher-secondary-button watcher-preview-add-button" onClick={() => onAdd(item)}>
+            <button className="watcher-primary-button watcher-preview-add-button" onClick={() => onAdd(item)}>
               <Icon name="plus" size={16} />
               Add To Watch List
             </button>

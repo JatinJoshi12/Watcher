@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context'
 import { Icon } from '../components/Icon'
 import { getProfile } from '../lib/communityRepository'
-import AddonManagerPanel from '../components/AddonManagerPanel'
+import AddonSettingsPanel from '../components/AddonSettingsPanel'
 
 const avatars = Array.from({ length: 10 }, (_, index) => `/avatars/avatar-${index + 1}.jpg`)
 
@@ -154,7 +154,7 @@ export default function Settings({ notify }) {
           </div>
         </form>
 
-        <AddonManagerPanel notify={notify} />
+        <AddonSettingsPanel notify={notify} />
       </div>
     </div>
   )

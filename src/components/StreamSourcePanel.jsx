@@ -1,306 +1,311 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Icon } from './Icon'
 import StreamPlayer from './StreamPlayer'
-import { getAllStreams, getConfiguredAddons, getPrimaryPlayableSource, getSubtitles } from '../lib/stremioAddons'
-import { getExternalIds } from '../lib/tmdb'
+import {
+  getStreamAddons,
+  findPlayableStreams,
+  rankBrowserStreams,
+} from '../lib/streamAddons'
+import { getExternalIds, getSeasonDetails, getTitleDetails } from '../lib/tmdb'
+import { findSubtitles } from '../lib/subtitles'
+import { fetchWatchNext } from '../lib/watchNext'
 
-function numberOrNull(value) {
-  const number = Number(value)
-  return Number.isFinite(number) && number > 0 ? number : null
+function range(count) {
+  return Array.from({ length: Math.max(0, Number(count) || 0) }, (_, index) => index + 1)
 }
 
-export default function StreamSourcePanel({ item, updateItem, notify, autoPlay = false }) {
-  const [addons, setAddons] = useState(() => getConfiguredAddons())
+export default function StreamSourcePanel({ item, notify, onUpdateItem }) {
+  const [loading, setLoading] = useState(true)
   const [streams, setStreams] = useState([])
-  const [playable, setPlayable] = useState([])
-  const [subtitles, setSubtitles] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [playing, setPlaying] = useState(null)
-  const [seasonDetails, setSeasonDetails] = useState(null)
-  const [seasonLoading, setSeasonLoading] = useState(false)
-  const playableRef = useRef([])
-  const autoStartedRef = useRef(false)
-  const autoStartTimerRef = useRef(null)
+  const [allStreams, setAllStreams] = useState([])
+  const [subtitleTracks, setSubtitleTracks] = useState([])
+  const [errors, setErrors] = useState([])
+  const [activePlayer, setActivePlayer] = useState(false)
+  const [seasonEpisodes, setSeasonEpisodes] = useState([])
+  const [episodeLoading, setEpisodeLoading] = useState(false)
+  const [selection, setSelection] = useState({
+    season: Math.max(1, Number(item.current_season) || 1),
+    episode: Math.max(1, Number(item.current_episode) || 1),
+  })
+  const [nextWatch, setNextWatch] = useState([])
+  const [resolvedTotalSeasons, setResolvedTotalSeasons] = useState(Number(item.total_seasons) || 1)
+  const [nextWatchError, setNextWatchError] = useState('')
+  const requestIdRef = useRef(0)
+  const idsRef = useRef(null)
+  const playerRef = useRef(null)
 
-  const isSeries = item.type === 'series'
-  const season = numberOrNull(item.current_season) || 1
-  const episode = numberOrNull(item.current_episode) || 1
+  const totalSeasons = Math.max(1, Number(resolvedTotalSeasons) || 1)
+  const episodeOptions = seasonEpisodes.length
+    ? seasonEpisodes.map((episode) => episode.episode_number)
+    : range(Math.max(1, Number(item.total_episodes) || 1))
 
-  const availableSeasons = useMemo(() => {
-    const total = numberOrNull(item.total_seasons)
-    return Array.from({ length: Math.max(total || season, 1) }, (_, index) => index + 1)
-  }, [item.total_seasons, season])
+  const selectedEpisodeExists = episodeOptions.includes(selection.episode)
 
-  const episodeCount = seasonDetails?.episodes?.length || numberOrNull(item.total_episodes) || episode
-  const availableEpisodes = Array.from({ length: Math.max(episodeCount, episode, 1) }, (_, index) => index + 1)
-
-  const resolveId = useCallback(async () => {
-    if (item.imdb_id) return item.imdb_id
+  const resolveIds = useCallback(async () => {
+    if (idsRef.current) return idsRef.current
+    if (!item.tmdb_id) throw new Error('This Title Does Not Have A TMDB ID.')
     const external = await getExternalIds(item.tmdb_id, item.type)
-    return external.imdb_id || ''
-  }, [item.imdb_id, item.tmdb_id, item.type])
+    if (!external.imdb_id && !external.tmdb_id) {
+      throw new Error('IMDb/TMDB ID Could Not Be Resolved For This Title.')
+    }
+    idsRef.current = {
+      imdbId: external.imdb_id,
+      tmdbId: external.tmdb_id || Number(item.tmdb_id),
+    }
+    return idsRef.current
+  }, [item.tmdb_id, item.type])
 
-  const loadSeasonDetails = useCallback(async (seasonNumber) => {
-    if (!isSeries) return
-    setSeasonLoading(true)
+  const loadSeason = useCallback(async (season) => {
+    if (item.type !== 'series' || !item.tmdb_id) return
+    setEpisodeLoading(true)
     try {
-      const { getSeasonDetails } = await import('../lib/tmdb')
-      const data = await getSeasonDetails(item.tmdb_id, seasonNumber)
-      setSeasonDetails(data)
+      const result = await getSeasonDetails(item.tmdb_id, season)
+      const episodes = result.episodes || []
+      setSeasonEpisodes(episodes)
+      const first = episodes[0]?.episode_number || 1
+      setSelection((current) => ({
+        ...current,
+        season,
+        episode: episodes.some((episode) => episode.episode_number === current.episode)
+          ? current.episode
+          : first,
+      }))
     } catch {
-      setSeasonDetails(null)
+      setSeasonEpisodes([])
     } finally {
-      setSeasonLoading(false)
+      setEpisodeLoading(false)
     }
-  }, [isSeries, item.tmdb_id])
+  }, [item.tmdb_id, item.type])
 
-  const addIncrementalPlayable = useCallback((source) => {
-    const key = source.url || source.externalUrl || source.raw?.infoHash || `${source.addonName}|${source.title}`
-    const exists = playableRef.current.some((entry) => {
-      const entryKey = entry.url || entry.externalUrl || entry.raw?.infoHash || `${entry.addonName}|${entry.title}`
-      return entryKey === key
+  const persistEpisodeSelection = useCallback((season, episode) => {
+    if (item.type !== 'series') return
+    const pending = onUpdateItem?.(item.id, {
+      current_season: season,
+      current_episode: episode,
     })
-    if (exists) return
+    pending?.catch?.(() => null)
+  }, [item.id, item.type, onUpdateItem])
 
-    const next = [...playableRef.current, source].sort((a, b) => b.score - a.score)
-    playableRef.current = next
-    setPlayable(next)
-
-    if (autoPlay && !autoStartedRef.current && !autoStartTimerRef.current) {
-      autoStartTimerRef.current = window.setTimeout(() => {
-        autoStartTimerRef.current = null
-        const best = playableRef.current[0]
-        if (best && !autoStartedRef.current) {
-          autoStartedRef.current = true
-          setPlaying(best)
-        }
-      }, 180)
-    }
-  }, [autoPlay])
-
-  const scanSources = useCallback(async (shouldAutoPlay = false) => {
+  const loadSources = useCallback(async () => {
+    const requestId = ++requestIdRef.current
     setLoading(true)
-    setError('')
-    playableRef.current = []
-    autoStartedRef.current = false
-    if (autoStartTimerRef.current) {
-      window.clearTimeout(autoStartTimerRef.current)
-      autoStartTimerRef.current = null
-    }
-    setPlayable([])
+    setActivePlayer(false)
+    setErrors([])
+    setStreams([])
+    setAllStreams([])
+    setSubtitleTracks([])
 
     try {
-      const imdbId = await resolveId()
-      if (!imdbId) throw new Error('IMDb ID could not be resolved for this title.')
-      const videoId = isSeries ? `${imdbId}:${season}:${episode}` : imdbId
-      const currentAddons = getConfiguredAddons()
-      setAddons(currentAddons)
+      const ids = await resolveIds()
+      const videoIdType = item.type
 
-      // Start subtitle discovery in parallel so it does not delay first playback.
-      getSubtitles(currentAddons, isSeries ? 'series' : 'movie', videoId, [])
-        .then((subtitleResults) => setSubtitles(subtitleResults))
-        .catch(() => setSubtitles([]))
+      const results = await Promise.allSettled([
+        findPlayableStreams({
+          addons: getStreamAddons(),
+          type: videoIdType,
+          ids,
+        }),
+        findSubtitles({
+          type: videoIdType,
+          videoId: ids.imdbId || `tmdb:${ids.tmdbId}`,
+        }),
+        fetchWatchNext({
+          type: videoIdType,
+          videoId: ids.imdbId || `tmdb:${ids.tmdbId}`,
+        }),
+      ])
 
-      const result = await getAllStreams(
-        currentAddons,
-        isSeries ? 'series' : 'movie',
-        videoId,
-        shouldAutoPlay ? addIncrementalPlayable : undefined,
-      )
-      setStreams(result.streams)
-      setPlayable(result.browserReady)
-      playableRef.current = result.browserReady
+      if (requestId !== requestIdRef.current) return
 
-      if (shouldAutoPlay && !autoStartedRef.current && result.browserReady.length) {
-        autoStartedRef.current = true
-        setPlaying(getPrimaryPlayableSource(result.browserReady))
-      }
+      const sourceResult = results[0].status === 'fulfilled'
+        ? results[0].value
+        : { all: [], playable: [], errors: [{ addon: 'Watcher', error: results[0].reason?.message || 'Source discovery failed.' }] }
+      const subtitleResult = results[1].status === 'fulfilled'
+        ? results[1].value
+        : { tracks: [], error: results[1].reason?.message || '' }
+      const nextResult = results[2].status === 'fulfilled' ? results[2].value : []
 
-      // Merge any subtitle tracks returned with the stream objects as well.
-      getSubtitles(currentAddons, isSeries ? 'series' : 'movie', videoId, result.streams)
-        .then((subtitleResults) => setSubtitles(subtitleResults))
-        .catch(() => null)
+      const streamSubtitleTracks = (sourceResult.all || []).flatMap((stream) => (stream.subtitles || []).map((subtitle, index) => ({
+        id: subtitle?.id || `${stream.id}-sub-${index}`,
+        url: subtitle?.url || subtitle?.file || '',
+        lang: subtitle?.lang || subtitle?.language || 'en',
+        label: subtitle?.label || subtitle?.lang || subtitle?.language || 'English',
+        format: String(subtitle?.format || '').toLowerCase(),
+      }))).filter((track) => track.url)
+      const mergedSubtitles = [...(subtitleResult.tracks || []), ...streamSubtitleTracks]
+        .filter((track, index, array) => array.findIndex((candidate) => candidate.url === track.url) === index)
 
-      if (!result.browserReady.length) {
-        const message = result.streams.length
-          ? `${result.streams.length} source${result.streams.length === 1 ? '' : 's'} found, but none are directly browser-playable.`
-          : 'No stream sources were returned by the configured stream addons.'
-        setError(message)
-        return
-      }
-
-    } catch (scanError) {
-      setError(scanError.message || 'Unable to find a playable source.')
+      setAllStreams(sourceResult.all)
+      setStreams(rankBrowserStreams(sourceResult.all))
+      setErrors([
+        ...(sourceResult.errors || []),
+        ...(subtitleResult.error ? [{ addon: 'OpenSubtitles', error: subtitleResult.error }] : []),
+      ])
+      setSubtitleTracks(mergedSubtitles)
+      setNextWatch(nextResult || [])
+      setNextWatchError(results[2].status === 'rejected' ? (results[2].reason?.message || 'Next Watch Unavailable.') : '')
+    } catch (error) {
+      if (requestId !== requestIdRef.current) return
+      setErrors([{ addon: 'Watcher', error: error.message || 'Unable To Find Streams.' }])
+      notify?.(error.message || 'Unable To Find Streams.', 'error')
     } finally {
-      setLoading(false)
+      if (requestId === requestIdRef.current) setLoading(false)
     }
-  }, [addIncrementalPlayable, episode, isSeries, resolveId, season])
+  }, [item.type, notify, resolveIds])
 
   useEffect(() => {
-    if (isSeries) loadSeasonDetails(season)
-  }, [isSeries, loadSeasonDetails, season])
+    let active = true
+    if (item.type !== 'series' || !item.tmdb_id) return undefined
+    if (Number(item.total_seasons) > 0) {
+      setResolvedTotalSeasons(Number(item.total_seasons))
+      return undefined
+    }
+    getTitleDetails(item.tmdb_id, 'series').then((details) => {
+      if (active && Number(details.total_seasons) > 0) setResolvedTotalSeasons(Number(details.total_seasons))
+    }).catch(() => null)
+    return () => { active = false }
+  }, [item.tmdb_id, item.total_seasons, item.type])
 
   useEffect(() => {
-    scanSources(autoPlay)
-    return () => {
-      if (autoStartTimerRef.current) {
-        window.clearTimeout(autoStartTimerRef.current)
-        autoStartTimerRef.current = null
-      }
-    }
-  }, [autoPlay, scanSources])
+    if (item.type === 'series') loadSeason(selection.season)
+  }, [item.type, selection.season, loadSeason])
 
-  const updateEpisode = async (nextSeason, nextEpisode) => {
-    try {
-      if (!updateItem) return
-      await updateItem(item.id, {
-        current_season: nextSeason,
-        current_episode: nextEpisode,
-      })
-      setPlaying(null)
-      if (nextSeason !== season) await loadSeasonDetails(nextSeason)
-    } catch (updateError) {
-      notify?.(updateError.message || 'Unable To Save Episode Selection.', 'error')
-    }
+  useEffect(() => {
+    loadSources()
+  }, [loadSources, selection.episode, selection.season])
+
+  const handleSeasonChange = (value) => {
+    const season = Math.max(1, Number(value) || 1)
+    setSelection((current) => ({ ...current, season, episode: 1 }))
+    persistEpisodeSelection(season, 1)
   }
+
+  const handleEpisodeChange = (value) => {
+    const episode = Math.max(1, Number(value) || 1)
+    setSelection((current) => ({ ...current, episode }))
+    persistEpisodeSelection(selection.season, episode)
+  }
+
+  const browserCount = streams.length
+  const subtitleCount = subtitleTracks.length
+  const sourceLabel = loading
+    ? 'Finding The Fastest Available Source…'
+    : browserCount
+      ? `${browserCount} Browser Source${browserCount === 1 ? '' : 's'} Queued For Playback.`
+      : allStreams.length
+        ? `${allStreams.length} Source${allStreams.length === 1 ? '' : 's'} Found, But None Can Play Directly In This Browser.`
+        : 'No Compatible Source Was Returned.'
+
+  const playerStreams = useMemo(() => streams, [streams])
 
   const startPlayback = () => {
-    if (playable.length) {
-      setPlaying(playable[0])
-      return
-    }
-    scanSources(true)
+    setActivePlayer(true)
+    playerRef.current?.start?.()
   }
 
-  const handlePlaybackError = useCallback((failedStream) => {
-    const currentPlayable = playableRef.current.length ? playableRef.current : playable
-    const index = currentPlayable.findIndex((stream) => (stream.url || '') === (failedStream.url || ''))
-    const next = index >= 0 ? currentPlayable[index + 1] : currentPlayable[0]
-    if (next) {
-      setPlaying(next)
-      notify?.(`Trying Another Source: ${next.addonName}.`, 'info')
-    } else {
-      setPlaying(null)
-      notify?.('All Browser-Compatible Sources Failed.', 'error')
-    }
-  }, [notify, playable])
-
-  const directSubtitles = subtitles.filter((subtitle) => subtitle.url)
+  const closePlayer = () => {
+    playerRef.current?.stop?.()
+    setActivePlayer(false)
+  }
 
   return (
-    <section className="watcher-stream-panel">
-      <div className="watcher-stream-panel-header">
+    <section className="watcher-stream-section">
+      <div className="watcher-stream-header">
         <div>
           <span className="watcher-kicker">WATCH NOW</span>
           <h2>One-Click Streaming</h2>
-          <p>
-            Watcher checks your enabled addons automatically and selects a browser-compatible source.
-          </p>
+          <p>Watcher checks your enabled addons, ranks compatible sources, and handles fallback automatically.</p>
         </div>
-        <div className="watcher-stream-source-count">
-          <strong>{streams.length}</strong>
-          <span>Sources</span>
+        <div className="watcher-stream-count-card">
+          <strong>{loading ? '…' : browserCount || allStreams.length}</strong>
+          <span>{loading ? 'CHECKING' : browserCount ? 'READY' : 'SOURCES'}</span>
         </div>
       </div>
 
-      {isSeries ? (
-        <div className="watcher-episode-controls">
-          <div>
-            <span className="watcher-kicker">SERIES CONTROL</span>
-            <h3>Choose Your Episode</h3>
-          </div>
-          <div className="watcher-episode-selects">
-            <label>
-              <span>Season</span>
-              <select
-                value={season}
-                onChange={(event) => updateEpisode(Number(event.target.value), 1)}
-                disabled={seasonLoading || loading}
-              >
-                {availableSeasons.map((number) => <option key={number} value={number}>Season {number}</option>)}
-              </select>
-            </label>
-            <label>
-              <span>Episode</span>
-              <select
-                value={episode}
-                onChange={(event) => updateEpisode(season, Number(event.target.value))}
-                disabled={seasonLoading || loading}
-              >
-                {availableEpisodes.map((number) => <option key={number} value={number}>Episode {number}</option>)}
-              </select>
-            </label>
-          </div>
+      {item.type === 'series' ? (
+        <div className="watcher-stream-episode-controls">
+          <label>
+            <span>Season</span>
+            <select value={selection.season} onChange={(event) => handleSeasonChange(event.target.value)} disabled={episodeLoading || loading}>
+              {range(totalSeasons).map((season) => <option key={season} value={season}>Season {season}</option>)}
+            </select>
+          </label>
+
+          <label>
+            <span>Episode</span>
+            <select value={selectedEpisodeExists ? selection.episode : episodeOptions[0]} onChange={(event) => handleEpisodeChange(event.target.value)} disabled={episodeLoading || loading}>
+              {episodeOptions.map((episodeNumber) => {
+                const detail = seasonEpisodes.find((episode) => episode.episode_number === episodeNumber)
+                return <option key={episodeNumber} value={episodeNumber}>Episode {episodeNumber}{detail?.name ? ` · ${detail.name}` : ''}</option>
+              })}
+            </select>
+          </label>
         </div>
       ) : null}
 
-      <div className="watcher-stream-main-action">
-        <button className="watcher-stream-play-button" onClick={startPlayback} disabled={loading && !playable.length}>
-          <span className="watcher-stream-play-icon"><Icon name="play" size={22} /></span>
-          <span>
-            <strong>{loading && !playable.length ? 'Finding A Source…' : 'Stream Now'}</strong>
-            <small>{isSeries ? `Season ${season} · Episode ${episode}` : 'Automatic source selection'}</small>
-          </span>
+      <div className="watcher-stream-primary-actions">
+        <button
+          className="watcher-primary-button watcher-stream-play-button"
+          type="button"
+          onClick={startPlayback}
+          disabled={loading || !playerStreams.length}
+        >
+          <Icon name="play" size={17} />
+          {loading ? 'Finding Stream…' : playerStreams.length ? 'Play Now' : 'No Browser Stream'}
         </button>
-        <button className="watcher-secondary-button" onClick={() => scanSources(false)} disabled={loading}>
-          <Icon name="refresh" size={16} />
+        <button className="watcher-secondary-button" type="button" onClick={loadSources} disabled={loading}>
+          <Icon name="refresh" size={14} />
           Refresh Sources
         </button>
       </div>
 
-      {loading ? <div className="watcher-stream-status"><span className="watcher-player-loader small" /> Searching Enabled Addons…</div> : null}
+      <div className={`watcher-stream-status ${browserCount ? 'ready' : allStreams.length ? 'warning' : 'empty'}`}>
+        <span>{browserCount ? '✓' : '!'}</span>
+        <strong>{sourceLabel}</strong>
+        {subtitleCount ? <em>{subtitleCount} subtitle track{subtitleCount === 1 ? '' : 's'} available.</em> : null}
+      </div>
 
-      {error ? (
-        <div className="watcher-stream-warning">
-          <Icon name="close" size={17} />
-          <div>
-            <strong>{error}</strong>
-            <span>Torrent, external-only, protected, or non-web-ready results cannot be played directly by a browser.</span>
-          </div>
-        </div>
-      ) : null}
-
-      {playable.length ? (
-        <div className="watcher-stream-ready">
-          <Icon name="check" size={16} />
-          <span><strong>{playable.length}</strong> browser-compatible source{playable.length === 1 ? '' : 's'} ready.</span>
-          {directSubtitles.length ? <span><strong>{directSubtitles.length}</strong> subtitle track{directSubtitles.length === 1 ? '' : 's'} available.</span> : null}
-        </div>
-      ) : null}
-
-      {playing ? (
+      {playerStreams.length ? (
         <StreamPlayer
-          stream={playing}
-          title={`${item.title}${isSeries ? ` · S${season}E${episode}` : ''}`}
-          subtitles={directSubtitles}
-          onPlaybackError={handlePlaybackError}
-          onClose={() => setPlaying(null)}
+          ref={playerRef}
+          visible={activePlayer}
+          streams={playerStreams}
+          subtitleTracks={subtitleTracks}
+          onClose={closePlayer}
+          onSuccess={(stream) => notify?.(`Playing From ${stream.addonName}.`, 'success')}
+          onAllFailed={() => notify?.('All Browser-Compatible Sources Failed.', 'error')}
         />
       ) : null}
 
-      {playable.length ? (
-        <details className="watcher-stream-source-details">
-          <summary>Show Available Browser Sources ({playable.length})</summary>
-          <div className="watcher-source-list">
-            {playable.map((stream, index) => (
-              <button key={`${stream.addonId}-${stream.url}-${index}`} className="watcher-source-item" onClick={() => setPlaying(stream)}>
-                <span className="watcher-source-quality">{stream.quality || 'AUTO'}</span>
-                <span className="watcher-source-copy">
-                  <strong>{stream.addonName}</strong>
-                  <small>{stream.isHls ? 'HLS' : 'Direct HTTP'}</small>
-                </span>
-                <Icon name="play" size={15} />
-              </button>
+      {nextWatch.length ? (
+        <section className="watcher-next-watch-panel">
+          <div className="watcher-stream-subheading">
+            <div>
+              <span className="watcher-kicker">NEXT WATCH</span>
+              <h3>More Like This</h3>
+            </div>
+          </div>
+          <div className="watcher-next-watch-list">
+            {nextWatch.map((entry) => (
+              <a key={entry.id} href={entry.url} target="_blank" rel="noreferrer" className="watcher-next-watch-item">
+                <span>{entry.title}</span>
+                <Icon name="arrow" size={14} />
+              </a>
             ))}
+          </div>
+        </section>
+      ) : null}
+
+      {errors.length ? (
+        <details className="watcher-stream-errors">
+          <summary>Addon Status ({errors.length} notices)</summary>
+          <div>
+            {errors.map((entry, index) => <span key={`${entry.addon}-${index}-${entry.error}`}>{entry.addon}: {entry.error}</span>)}
           </div>
         </details>
       ) : null}
 
-      <div className="watcher-stream-addon-footnote">
-        {addons.filter((addon) => addon.enabled && addon.manifestUrl).length} enabled addon{addons.filter((addon) => addon.enabled && addon.manifestUrl).length === 1 ? '' : 's'} checked.
-        Watcher skips addons that do not declare the requested resource or type.
-      </div>
+      {nextWatchError ? <div className="watcher-stream-note">Watch Next is unavailable for this title right now.</div> : null}
     </section>
   )
 }

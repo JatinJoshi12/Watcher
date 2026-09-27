@@ -1,7 +1,7 @@
 const API_BASE = 'https://api.themoviedb.org/3'
 const POSTER_BASE = 'https://image.tmdb.org/t/p/w500'
 const BACKDROP_BASE = 'https://image.tmdb.org/t/p/w1280'
-const token = import.meta.env.VITE_TMDB_API_TOKEN?.trim() || ''
+const token = import.meta.env?.VITE_TMDB_API_TOKEN?.trim() || ''
 
 export const tmdbConfigured = Boolean(token)
 
@@ -311,24 +311,6 @@ export async function getRecentTrailers() {
     .slice(0, 30)
 }
 
-export async function getExternalIds(id, type = 'movie') {
-  const endpoint = type === 'series' ? `/tv/${id}/external_ids` : `/movie/${id}/external_ids`
-  const data = await request(endpoint)
-  return {
-    imdb_id: data.imdb_id || null,
-    tvdb_id: data.tvdb_id || null,
-    wikidata_id: data.wikidata_id || null,
-  }
-}
-
-export async function getSeasonDetails(id, seasonNumber) {
-  const data = await request(`/tv/${id}/season/${seasonNumber}`)
-  return {
-    season_number: Number(data.season_number) || Number(seasonNumber) || 1,
-    episodes: Array.isArray(data.episodes) ? data.episodes : [],
-  }
-}
-
 export async function getTitleDetails(id, type = 'movie') {
   const endpoint = type === 'series' ? `/tv/${id}` : `/movie/${id}`
   const data = await request(endpoint)
@@ -346,6 +328,32 @@ export async function getTitleDetails(id, type = 'movie') {
     genre_ids: Array.isArray(data.genres) ? data.genres.map((genre) => genre.id).filter(Boolean) : normalized.genre_ids,
     genre_names: Array.isArray(data.genres) ? data.genres.map((genre) => genre.name).filter(Boolean) : [],
     tagline: data.tagline || '',
+  }
+}
+
+
+export async function getExternalIds(id, type = 'movie') {
+  const endpoint = type === 'series' ? `/tv/${id}/external_ids` : `/movie/${id}/external_ids`
+  const data = await request(endpoint)
+  return {
+    imdb_id: data.imdb_id || null,
+    tmdb_id: id != null ? Number(id) : null,
+    tvdb_id: data.tvdb_id || null,
+  }
+}
+
+export async function getSeasonDetails(id, seasonNumber) {
+  if (seasonNumber == null || Number.isNaN(Number(seasonNumber))) {
+    throw new Error('A Season Number Is Required.')
+  }
+  const data = await request(`/tv/${id}/season/${Number(seasonNumber)}`)
+  return {
+    season_number: Number(data.season_number) || Number(seasonNumber),
+    episodes: Array.isArray(data.episodes) ? data.episodes.map((episode) => ({
+      episode_number: Number(episode.episode_number),
+      name: episode.name || `Episode ${episode.episode_number}`,
+      air_date: episode.air_date || null,
+    })) : [],
   }
 }
 

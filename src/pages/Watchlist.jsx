@@ -305,15 +305,7 @@ export default function Watchlist({ onDelete, notify }) {
         </div>
 
         {results.length ? (
-          <WatchlistGrid
-            items={results}
-            onDelete={onDelete}
-            onToggleStatus={toggleStatus}
-            onToggleFavorite={() => {}}
-            onOpenDetails={(item) => setViewTarget(item)}
-            onStream={(item) => navigate(`/watchlists/${id}/items/${item.id}`, { state: { watcherAutoPlay: true } })}
-            busyId={busyId || addingId}
-          />
+          <WatchlistGrid items={results} onDelete={onDelete} onToggleStatus={toggleStatus} onToggleFavorite={() => {}} onOpenDetails={(item) => setViewTarget(item)} onStream={(item) => navigate(`/watchlists/${id}/items/${item.id}`)} busyId={busyId || addingId} />
         ) : (
           <div className="watcher-watchlist-empty">
             <Icon name="play" size={24} />
@@ -325,7 +317,7 @@ export default function Watchlist({ onDelete, notify }) {
       </div>
 
       <Modal open={Boolean(viewTarget)} onClose={() => setViewTarget(null)} title="Title Details" size="large" className="watcher-title-preview-modal">
-        <TitlePreviewModal item={viewTarget} onClose={() => setViewTarget(null)} onStream={(item) => { setViewTarget(null); navigate(`/watchlists/${id}/items/${item.id}`, { state: { watcherAutoPlay: true } }) }} />
+        <TitlePreviewModal item={viewTarget} onClose={() => setViewTarget(null)} />
       </Modal>
 
       <Modal open={randomPickOpen} onClose={() => setRandomPickOpen(false)} title="Random Pick" size="large" className="watcher-random-pick-modal">

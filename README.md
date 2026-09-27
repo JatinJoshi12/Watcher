@@ -10,28 +10,6 @@ A cinematic movie and web-series discovery and personal watch-list application b
 - **Discover**: Large cinematic search, separate Movies and Web Series sections, genre browsing, and Show More pagination.
 - **Settings**: Edit display name, profile avatar, view email, save profile changes, and log out.
 
-## Streaming Integration
-
-Watcher includes a browser-first Stremio addon layer for the configured stream, subtitle, and recommendation addons. On a saved movie or series, the **Stream** action resolves the IMDb ID, queries enabled stream addons in parallel, selects a browser-compatible HTTP/HLS source, and attempts playback automatically. If the selected source fails, Watcher moves to the next compatible source.
-
-For series, Watcher provides Season and Episode selectors and requests sources for the selected episode. Subtitle discovery runs alongside source discovery and supports external subtitle URLs that the browser can fetch.
-
-### Configured Addons
-
-- PenguPlay
-- Showbox
-- HdHub
-- WebStreamrMBG
-- Flix-Streams Free
-- OpenSubtitles PRO
-- Watch Next
-
-PenguPlay is represented by `VITE_PENGUPLAY_MANIFEST_URL` in local configuration because the personal manifest URL can contain authentication/configuration data. Do not commit or publish the real value.
-
-### Browser Playback Limits
-
-The browser player accepts direct HTTP/HTTPS media URLs and HLS playlists. Torrent-only (`infoHash`/magnet) and sources requiring addon-side proxy headers are not treated as direct browser playback. This prevents Watcher from presenting a source as playable when the browser cannot consume it directly.
-
 ## Visual System
 
 The app uses a dark cinematic presentation with bold Manrope/DM Sans typography, gold accents, strong shadows, subtle motion, and supplied movie-collage backgrounds across the authenticated pages.
@@ -80,3 +58,9 @@ The application uses TMDB for in-site movie/TV discovery, upcoming releases, tre
 ## Install As An App
 
 Watcher includes a web app manifest, app icons, standalone display mode, and a service worker. After deployment over HTTPS, use your browser's **Install App** / **Add To Home Screen** option. The installed shortcut opens Watcher as a standalone app rather than a normal browser tab.
+
+## Browser Streaming Integration
+
+Watcher can query configured Stremio-compatible HTTP/HLS addons from the title detail page. The player only attempts browser media URLs and automatically falls back to the next candidate when a source fails. Series titles expose season and episode selectors, and the OpenSubtitles PRO addon can supply subtitle tracks.
+
+For PenguPlay, store your own authenticated manifest URL in `VITE_PENGUPLAY_MANIFEST_URL` or enter it under Settings. Do not commit an authenticated manifest URL or token to source control.
