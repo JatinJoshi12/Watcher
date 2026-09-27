@@ -3,7 +3,7 @@ import { Icon } from './Icon'
 import StreamPlayer from './StreamPlayer'
 import {
   getStreamAddons,
-  findPlayableStreams,
+  findPlayableStreamsProgressive,
   rankBrowserStreams,
 } from '../lib/streamAddons'
 import { getExternalIds, getSeasonDetails, getTitleDetails } from '../lib/tmdb'
@@ -16,6 +16,7 @@ function range(count) {
 
 export default function StreamSourcePanel({ item, notify, onUpdateItem }) {
   const [loading, setLoading] = useState(true)
+  const [searchingMore, setSearchingMore] = useState(false)
   const [streams, setStreams] = useState([])
   const [allStreams, setAllStreams] = useState([])
   const [subtitleTracks, setSubtitleTracks] = useState([])
@@ -32,6 +33,7 @@ export default function StreamSourcePanel({ item, notify, onUpdateItem }) {
   const [nextWatchError, setNextWatchError] = useState('')
   const requestIdRef = useRef(0)
   const idsRef = useRef(null)
+  const sourceKeyRef = useRef('')
   const playerRef = useRef(null)
 
   const totalSeasons = Math.max(1, Number(resolvedTotalSeasons) || 1)
@@ -88,68 +90,91 @@ export default function StreamSourcePanel({ item, notify, onUpdateItem }) {
 
   const loadSources = useCallback(async () => {
     const requestId = ++requestIdRef.current
-    setLoading(true)
+    const nextSourceKey = `${item.type}|${item.tmdb_id}|${selection.season}|${selection.episode}`
+    const sameSourceKey = sourceKeyRef.current === nextSourceKey
+    sourceKeyRef.current = nextSourceKey
+    setLoading(!sameSourceKey || streams.length === 0)
+    setSearchingMore(true)
     setActivePlayer(false)
     setErrors([])
-    setStreams([])
-    setAllStreams([])
-    setSubtitleTracks([])
+    if (!sameSourceKey) {
+      setStreams([])
+      setAllStreams([])
+      setSubtitleTracks([])
+    }
+    setNextWatch([])
+    setNextWatchError('')
 
     try {
       const ids = await resolveIds()
       const videoIdType = item.type
 
-      const results = await Promise.allSettled([
-        findPlayableStreams({
-          addons: getStreamAddons(),
-          type: videoIdType,
-          ids,
-        }),
-        findSubtitles({
-          type: videoIdType,
-          videoId: ids.imdbId || `tmdb:${ids.tmdbId}`,
-        }),
-        fetchWatchNext({
-          type: videoIdType,
-          videoId: ids.imdbId || `tmdb:${ids.tmdbId}`,
-        }),
-      ])
+      // Source discovery is the critical path. Don't wait for subtitles or
+      // recommendations before allowing the user to press Play.
+      const sourcePromise = findPlayableStreamsProgressive({
+        addons: getStreamAddons(),
+        type: videoIdType,
+        ids,
+        onAddonResult: ({ all, errors: nextErrors }) => {
+          if (requestId !== requestIdRef.current) return
+          const ranked = rankBrowserStreams(all)
+          const streamSubtitles = all.flatMap((stream) => (stream.subtitles || []).map((subtitle, index) => ({
+            id: subtitle?.id || `${stream.id}-sub-${index}`,
+            url: subtitle?.url || subtitle?.file || '',
+            lang: subtitle?.lang || subtitle?.language || 'en',
+            label: subtitle?.label || subtitle?.lang || subtitle?.language || 'English',
+            format: String(subtitle?.format || '').toLowerCase(),
+          }))).filter((track) => track.url)
+          setAllStreams(all)
+          setStreams(ranked)
+          setErrors(nextErrors)
+          setSubtitleTracks((current) => [...current, ...streamSubtitles]
+            .filter((track, index, array) => array.findIndex((candidate) => candidate.url === track.url) === index))
+          if (ranked.length) setLoading(false)
+        },
+      })
 
+      // These are deliberately independent of the source critical path.
+      findSubtitles({
+        type: videoIdType,
+        videoId: ids.imdbId || `tmdb:${ids.tmdbId}`,
+      }).then((subtitleResult) => {
+        if (requestId !== requestIdRef.current) return
+        setSubtitleTracks((current) => [...(subtitleResult.tracks || []), ...current]
+          .filter((track, index, array) => array.findIndex((candidate) => candidate.url === track.url) === index))
+        if (subtitleResult.error) {
+          setErrors((current) => [...current, { addon: 'OpenSubtitles', error: subtitleResult.error }])
+        }
+      }).catch(() => null)
+
+      fetchWatchNext({
+        type: videoIdType,
+        videoId: ids.imdbId || `tmdb:${ids.tmdbId}`,
+      }).then((nextResult) => {
+        if (requestId === requestIdRef.current) setNextWatch(nextResult || [])
+      }).catch((error) => {
+        if (requestId === requestIdRef.current) setNextWatchError(error?.message || 'Next Watch Unavailable.')
+      })
+
+      const sourceResult = await sourcePromise
       if (requestId !== requestIdRef.current) return
-
-      const sourceResult = results[0].status === 'fulfilled'
-        ? results[0].value
-        : { all: [], playable: [], errors: [{ addon: 'Watcher', error: results[0].reason?.message || 'Source discovery failed.' }] }
-      const subtitleResult = results[1].status === 'fulfilled'
-        ? results[1].value
-        : { tracks: [], error: results[1].reason?.message || '' }
-      const nextResult = results[2].status === 'fulfilled' ? results[2].value : []
-
-      const streamSubtitleTracks = (sourceResult.all || []).flatMap((stream) => (stream.subtitles || []).map((subtitle, index) => ({
-        id: subtitle?.id || `${stream.id}-sub-${index}`,
-        url: subtitle?.url || subtitle?.file || '',
-        lang: subtitle?.lang || subtitle?.language || 'en',
-        label: subtitle?.label || subtitle?.lang || subtitle?.language || 'English',
-        format: String(subtitle?.format || '').toLowerCase(),
-      }))).filter((track) => track.url)
-      const mergedSubtitles = [...(subtitleResult.tracks || []), ...streamSubtitleTracks]
-        .filter((track, index, array) => array.findIndex((candidate) => candidate.url === track.url) === index)
-
       setAllStreams(sourceResult.all)
-      setStreams(rankBrowserStreams(sourceResult.all))
-      setErrors([
-        ...(sourceResult.errors || []),
-        ...(subtitleResult.error ? [{ addon: 'OpenSubtitles', error: subtitleResult.error }] : []),
-      ])
-      setSubtitleTracks(mergedSubtitles)
-      setNextWatch(nextResult || [])
-      setNextWatchError(results[2].status === 'rejected' ? (results[2].reason?.message || 'Next Watch Unavailable.') : '')
+      setStreams(sourceResult.playable)
+      setErrors((current) => {
+        const sourceErrors = sourceResult.errors || []
+        const nonAddon = current.filter((entry) => entry.addon === 'OpenSubtitles')
+        return [...sourceErrors, ...nonAddon]
+      })
+      if (!sourceResult.playable.length) setLoading(false)
     } catch (error) {
       if (requestId !== requestIdRef.current) return
       setErrors([{ addon: 'Watcher', error: error.message || 'Unable To Find Streams.' }])
       notify?.(error.message || 'Unable To Find Streams.', 'error')
     } finally {
-      if (requestId === requestIdRef.current) setLoading(false)
+      if (requestId === requestIdRef.current) {
+        setLoading(false)
+        setSearchingMore(false)
+      }
     }
   }, [item.type, notify, resolveIds])
 
@@ -188,8 +213,10 @@ export default function StreamSourcePanel({ item, notify, onUpdateItem }) {
 
   const browserCount = streams.length
   const subtitleCount = subtitleTracks.length
-  const sourceLabel = loading
-    ? 'Finding The Fastest Available Source…'
+  const sourceLabel = searchingMore && browserCount
+    ? `${browserCount} Browser Source${browserCount === 1 ? '' : 's'} Ready · Finding More…`
+    : loading
+      ? 'Finding The Fastest Available Source…'
     : browserCount
       ? `${browserCount} Browser Source${browserCount === 1 ? '' : 's'} Queued For Playback.`
       : allStreams.length
@@ -248,12 +275,12 @@ export default function StreamSourcePanel({ item, notify, onUpdateItem }) {
           className="watcher-primary-button watcher-stream-play-button"
           type="button"
           onClick={startPlayback}
-          disabled={loading || !playerStreams.length}
+          disabled={!playerStreams.length}
         >
           <Icon name="play" size={17} />
-          {loading ? 'Finding Stream…' : playerStreams.length ? 'Play Now' : 'No Browser Stream'}
+          {loading && !playerStreams.length ? 'Finding Stream…' : playerStreams.length ? 'Play Now' : 'No Browser Stream'}
         </button>
-        <button className="watcher-secondary-button" type="button" onClick={loadSources} disabled={loading}>
+        <button className="watcher-secondary-button" type="button" onClick={loadSources} disabled={searchingMore}>
           <Icon name="refresh" size={14} />
           Refresh Sources
         </button>

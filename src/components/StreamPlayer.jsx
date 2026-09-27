@@ -69,7 +69,10 @@ const StreamPlayer = forwardRef(function StreamPlayer({ streams = [], subtitleTr
   const listenersRef = useRef([])
   const pendingPlayRef = useRef(null)
   const activeIndexRef = useRef(0)
+  const activeUrlRef = useRef('')
   const startedRef = useRef(false)
+  const startupTimerRef = useRef(null)
+  const stallTimerRef = useRef(null)
   const [activeStream, setActiveStream] = useState(streams[0] || null)
   const [status, setStatus] = useState('idle')
   const [error, setError] = useState('')
@@ -85,20 +88,28 @@ const StreamPlayer = forwardRef(function StreamPlayer({ streams = [], subtitleTr
     return () => { active = false }
   }, [subtitleTracks])
 
-  const cleanupMedia = ({ pauseVideo = false } = {}) => {
+  const clearTimers = () => {
+    if (startupTimerRef.current) window.clearTimeout(startupTimerRef.current)
+    if (stallTimerRef.current) window.clearTimeout(stallTimerRef.current)
+    startupTimerRef.current = null
+    stallTimerRef.current = null
+  }
+
+  const cleanupMedia = ({ pauseVideo = false, resetVideo = true } = {}) => {
+    clearTimers()
     const video = videoRef.current
     const hls = hlsRef.current
     hlsRef.current = null
     if (hls) hls.destroy()
     listenersRef.current.forEach(([target, event, handler]) => target.removeEventListener(event, handler))
     listenersRef.current = []
-    if (video) {
+    if (video && resetVideo) {
       const pending = pendingPlayRef.current
       if (pending?.catch) pending.catch(() => {})
       pendingPlayRef.current = null
       if (pauseVideo) { try { video.pause() } catch { /* cleanup */ } }
       video.removeAttribute('src')
-      try { video.load() } catch { /* cleanup */ }
+      try { video.load() } catch { /* cleanup */ } 
     }
   }
 
@@ -111,65 +122,115 @@ const StreamPlayer = forwardRef(function StreamPlayer({ streams = [], subtitleTr
     }
 
     activeIndexRef.current = index
+    activeUrlRef.current = candidate.url
     setActiveStream(candidate)
     setStatus('loading')
     setError('')
-    cleanupMedia()
+    // Switching sources must not call pause()/load() on the old media element
+    // while a previous play() promise is pending. That was causing the Chrome
+    // "play() request was interrupted by pause()" loop.
+    cleanupMedia({ resetVideo: false })
 
     const fail = (message) => handleFailure(message, index)
+
+    const markPlaying = () => {
+      clearTimers()
+      setStatus('playing')
+      onSuccess?.(candidate)
+    }
+
+    const markReady = async () => {
+      if (activeIndexRef.current !== index || !startedRef.current) return
+      setStatus('ready')
+      try {
+        const promise = video.play()
+        pendingPlayRef.current = promise
+        await promise
+        if (activeIndexRef.current === index && startedRef.current) markPlaying()
+      } catch (cause) {
+        pendingPlayRef.current = null
+        if (cause?.name === 'NotAllowedError') {
+          // Browser autoplay policy: keep this source alive and let the native
+          // video controls take the click rather than failing over unnecessarily.
+          setStatus('ready')
+          setError('Press Play In The Video Controls To Start Playback.')
+          return
+        }
+        fail('This Source Failed To Start In Your Browser.')
+      }
+    }
+
+    const handlePlaying = () => markPlaying()
+    const handleWaiting = () => {
+      if (activeIndexRef.current !== index || !startedRef.current) return
+      setStatus('buffering')
+      if (stallTimerRef.current) window.clearTimeout(stallTimerRef.current)
+      stallTimerRef.current = window.setTimeout(() => {
+        if (activeIndexRef.current === index && startedRef.current) {
+          fail('Source Stalled For Too Long. Trying Another Source…')
+        }
+      }, 15000)
+    }
+    const handleCanPlay = () => {
+      if (stallTimerRef.current) window.clearTimeout(stallTimerRef.current)
+      if (startedRef.current) setStatus('ready')
+    }
+    const handleError = () => fail('This Source Failed To Load In Your Browser.')
+
+    video.addEventListener('playing', handlePlaying)
+    video.addEventListener('waiting', handleWaiting)
+    video.addEventListener('stalled', handleWaiting)
+    video.addEventListener('canplay', handleCanPlay)
+    video.addEventListener('error', handleError)
+    listenersRef.current.push(
+      [video, 'playing', handlePlaying],
+      [video, 'waiting', handleWaiting],
+      [video, 'stalled', handleWaiting],
+      [video, 'canplay', handleCanPlay],
+      [video, 'error', handleError],
+    )
+
+    startupTimerRef.current = window.setTimeout(() => {
+      if (activeIndexRef.current === index && startedRef.current && video.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) {
+        fail('Source Took Too Long To Start. Trying Another Source…')
+      }
+    }, 14000)
 
     try {
       if (isHls(candidate.url) && !video.canPlayType('application/vnd.apple.mpegurl')) {
         const Hls = await loadHls()
         if (!Hls.isSupported()) throw new Error('This Browser Does Not Support HLS Playback.')
         if (activeIndexRef.current !== index || !startedRef.current) return
-        const hls = new Hls({ enableWorker: true, lowLatencyMode: false })
+        const hls = new Hls({
+          enableWorker: true,
+          lowLatencyMode: false,
+          maxBufferLength: 45,
+          maxMaxBufferLength: 120,
+          backBufferLength: 30,
+          startFragPrefetch: true,
+          maxBufferHole: 0.25,
+          capLevelToPlayerSize: true,
+        })
         hlsRef.current = hls
-        hls.on(Hls.Events.MANIFEST_PARSED, async () => {
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
           if (activeIndexRef.current !== index || !startedRef.current) return
-          setStatus('ready')
-          try {
-            pendingPlayRef.current = video.play()
-            await pendingPlayRef.current
-            onSuccess?.(candidate)
-          } catch {
-            // User can still use native controls after an autoplay policy rejection.
-          }
+          markReady()
         })
         hls.on(Hls.Events.ERROR, (_event, data) => {
-          if (data?.fatal) fail('This HLS Source Failed To Load.')
+          if (!data?.fatal || activeIndexRef.current !== index) return
+          fail('This HLS Source Failed To Load.')
         })
         hls.loadSource(candidate.url)
         hls.attachMedia(video)
         return
       }
 
-      let readyHandled = false
-      const handleReady = async () => {
-        if (readyHandled || activeIndexRef.current !== index || !startedRef.current) return
-        readyHandled = true
-        setStatus('ready')
-        try {
-          pendingPlayRef.current = video.play()
-          await pendingPlayRef.current
-          onSuccess?.(candidate)
-        } catch {
-          // Browser autoplay policy can reject a second asynchronous play attempt.
-          // Keep controls visible so the user can start playback manually.
-        }
-      }
-
-      const handleError = () => fail('This Source Failed To Load In Your Browser.')
-      video.addEventListener('loadedmetadata', handleReady, { once: true })
-      video.addEventListener('canplay', handleReady, { once: true })
-      video.addEventListener('error', handleError, { once: true })
-      listenersRef.current.push(
-        [video, 'loadedmetadata', handleReady],
-        [video, 'canplay', handleReady],
-        [video, 'error', handleError],
-      )
+      // For direct HTTP media, attach the source and request playback in the
+      // same user-initiated call stack. Waiting for loadedmetadata first can
+      // lose browser user activation and trigger autoplay rejection.
       video.src = candidate.url
       video.load()
+      await markReady()
     } catch (cause) {
       fail(cause?.message || 'This Source Could Not Be Started.')
     }
@@ -177,10 +238,16 @@ const StreamPlayer = forwardRef(function StreamPlayer({ streams = [], subtitleTr
 
   const handleFailure = (message, index) => {
     if (!startedRef.current || index !== activeIndexRef.current) return
-    const nextIndex = index + 1
+    clearTimers()
+    const currentUrl = activeUrlRef.current
+    const currentIndex = streams.findIndex((stream) => stream.url === currentUrl)
+    const nextIndex = currentIndex >= 0 ? currentIndex + 1 : index + 1
+
     if (nextIndex < streams.length) {
       setError(message)
-      window.setTimeout(() => startSource(nextIndex), 0)
+      window.setTimeout(() => {
+        if (startedRef.current && activeUrlRef.current === currentUrl) startSource(nextIndex)
+      }, 100)
       return
     }
     setStatus('error')
@@ -192,24 +259,46 @@ const StreamPlayer = forwardRef(function StreamPlayer({ streams = [], subtitleTr
     start() {
       startedRef.current = true
       activeIndexRef.current = 0
+      activeUrlRef.current = ''
       setError('')
       startSource(0)
     },
     stop() {
       startedRef.current = false
-      cleanupMedia({ pauseVideo: true })
+      activeUrlRef.current = ''
+      cleanupMedia({ pauseVideo: true, resetVideo: true })
       setStatus('idle')
     },
   }), [streams, onAllFailed, onSuccess])
 
   useEffect(() => {
-    setActiveStream(streams[0] || null)
+    const activeUrl = activeUrlRef.current
+    if (startedRef.current && activeUrl && streams.some((stream) => stream.url === activeUrl)) {
+      const activeIndex = streams.findIndex((stream) => stream.url === activeUrl)
+      activeIndexRef.current = activeIndex
+      setActiveStream(streams[activeIndex])
+      return undefined
+    }
+
+    if (!startedRef.current) {
+      setActiveStream(streams[0] || null)
+      activeIndexRef.current = 0
+      setStatus('idle')
+      setError('')
+      return undefined
+    }
+
     startedRef.current = false
+    activeUrlRef.current = ''
     activeIndexRef.current = 0
+    cleanupMedia({ pauseVideo: true, resetVideo: true })
+    setActiveStream(streams[0] || null)
     setStatus('idle')
     setError('')
-    return () => cleanupMedia({ pauseVideo: true })
+    return undefined
   }, [streams])
+
+  useEffect(() => () => cleanupMedia({ pauseVideo: true, resetVideo: true }), [])
 
   const selectSubtitle = (event) => {
     const value = event.target.value
@@ -234,10 +323,11 @@ const StreamPlayer = forwardRef(function StreamPlayer({ streams = [], subtitleTr
       </div>
 
       <div className="watcher-video-shell">
-        <video ref={videoRef} className="watcher-video" controls playsInline preload="metadata">
+        <video ref={videoRef} className="watcher-video" controls playsInline preload="auto">
           {preparedSubtitles.map((track) => <track key={track.id} kind="subtitles" srcLang={track.lang} label={track.label} src={track.src} />)}
         </video>
         {status === 'loading' ? <div className="watcher-video-overlay">Starting Stream…</div> : null}
+        {status === 'buffering' ? <div className="watcher-video-overlay">Buffering…</div> : null}
         {status === 'error' ? <div className="watcher-video-overlay">No Working Browser Source Found.</div> : null}
       </div>
 

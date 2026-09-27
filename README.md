@@ -64,3 +64,26 @@ Watcher includes a web app manifest, app icons, standalone display mode, and a s
 Watcher can query configured Stremio-compatible HTTP/HLS addons from the title detail page. The player only attempts browser media URLs and automatically falls back to the next candidate when a source fails. Series titles expose season and episode selectors, and the OpenSubtitles PRO addon can supply subtitle tracks.
 
 For PenguPlay, store your own authenticated manifest URL in `VITE_PENGUPLAY_MANIFEST_URL` or enter it under Settings. Do not commit an authenticated manifest URL or token to source control.
+
+## Dependency note
+
+`node_modules` is intentionally not included in the project ZIP. Install dependencies on the machine where you run Watcher so npm selects the correct native packages for that operating system.
+
+If Windows shows a Rolldown/Vite native-binding error, close the dev server, remove the local `node_modules` folder, and run:
+
+```powershell
+Remove-Item -Recurse -Force node_modules
+npm cache verify
+npm install --include=optional
+npm run dev
+```
+
+Do not copy `node_modules` from another operating system into this project.
+
+## Streaming Integration Notes
+
+Watcher treats direct HTTP(S) stream URLs as playback candidates and lets the browser/player validate the source at runtime. Stremio `infoHash`/torrent-only results are not treated as direct browser media. Provider preference is PenguPlay first, HdHub second, then Showbox, WebStreamrMBG, and Flix-Streams Free.
+
+For a series, the stream request uses the selected season and episode. Subtitle discovery is independent of source discovery so it does not delay first playback.
+
+Set `VITE_PENGUPLAY_MANIFEST_URL` to your current private authenticated PenguPlay manifest URL. Do not commit or share that value.
