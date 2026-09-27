@@ -42,7 +42,7 @@ async function subtitleSource(track) {
   }
 }
 
-export default function StreamPlayer({ streams = [], subtitleTracks = [], discoveryComplete = false, autoStart = false, onSuccess, onAllFailed }) {
+export default function StreamPlayer({ playbackKey = '', streams = [], subtitleTracks = [], discoveryComplete = false, autoStart = false, onSuccess, onAllFailed }) {
   const videoRef = useRef(null)
   const hlsRef = useRef(null)
   const attemptedRef = useRef(new Set())
@@ -60,12 +60,15 @@ export default function StreamPlayer({ streams = [], subtitleTracks = [], discov
 
   useEffect(() => {
     let active = true
+    let createdTracks = []
     Promise.all((subtitleTracks || []).slice(0, 8).map(subtitleSource)).then((tracks) => {
-      if (active) setPreparedSubtitles(tracks.filter((track) => track?.src))
+      createdTracks = tracks.filter((track) => track?.src)
+      if (active) setPreparedSubtitles(createdTracks)
+      else createdTracks.forEach((track) => track.revoke?.())
     })
     return () => {
       active = false
-      preparedSubtitles.forEach((track) => track.revoke?.())
+      createdTracks.forEach((track) => track.revoke?.())
     }
   }, [subtitleTracks])
 
@@ -82,7 +85,12 @@ export default function StreamPlayer({ streams = [], subtitleTracks = [], discov
     }
   }
 
-  const chooseNext = () => streams.find((stream) => stream?.url && !attemptedRef.current.has(stream.url)) || null
+  const chooseNext = () => {
+    const candidates = streams.filter((stream) => stream?.url && !attemptedRef.current.has(stream.url))
+    if (!candidates.length) return null
+    const confident = candidates.filter((stream) => (stream.matchScore ?? 1) >= 0.55)
+    return (confident.length ? confident : candidates)[0] || null
+  }
 
   const reportFailure = (stream) => {
     if (stream?.url) attemptedRef.current.add(stream.url)
@@ -173,9 +181,10 @@ export default function StreamPlayer({ streams = [], subtitleTracks = [], discov
         const hls = new Hls({
           enableWorker: true,
           lowLatencyMode: false,
-          maxBufferLength: 60,
-          maxMaxBufferLength: 180,
-          backBufferLength: 30,
+          maxBufferLength: 45,
+          maxMaxBufferLength: 120,
+          backBufferLength: 20,
+          maxBufferHole: 0.5,
           startFragPrefetch: true,
           capLevelToPlayerSize: true,
           abrBandWidthFactor: 0.92,
@@ -194,14 +203,49 @@ export default function StreamPlayer({ streams = [], subtitleTracks = [], discov
         video.load()
         startTimerRef.current = window.setTimeout(() => {
           if (activeUrlRef.current === stream.url && video.readyState < 2) reportFailure(stream)
-        }, 15000)
-        await playVideo(stream, token)
+        }, 12000)
+
+        if (video.readyState >= 3) {
+          await playVideo(stream, token)
+        } else {
+          await new Promise((resolve, reject) => {
+            let settled = false
+            const finish = (fn) => {
+              if (settled) return
+              settled = true
+              video.removeEventListener('canplay', onCanPlay)
+              video.removeEventListener('error', onLoadError)
+              fn()
+            }
+            const onCanPlay = () => finish(resolve)
+            const onLoadError = () => finish(() => reject(new Error('Video Source Failed To Load.')))
+            video.addEventListener('canplay', onCanPlay, { once: true })
+            video.addEventListener('error', onLoadError, { once: true })
+          })
+          if (activeUrlRef.current === stream.url) await playVideo(stream, token)
+        }
       }
     } catch {
       reportFailure(stream)
     }
 
   }
+
+  useEffect(() => {
+    attemptedRef.current.clear()
+    activeUrlRef.current = ''
+    startingRef.current = false
+    lastStreamSignatureRef.current = ''
+    setActiveStream(null)
+    setMutedFallback(false)
+    setStatus('searching')
+    cleanup()
+    const video = videoRef.current
+    if (video) {
+      try { video.removeAttribute('src') } catch {}
+      try { video.load() } catch {}
+    }
+  }, [playbackKey])
 
   useEffect(() => {
     if (!autoStart) return

@@ -191,11 +191,77 @@ function detectKind(stream) {
   return 'unknown'
 }
 
-export function normalizeStream(stream, addon, index = 0) {
+function normalizeMatchText(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/\[[^\]]*\]/g, ' ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function titleTokens(value) {
+  return normalizeMatchText(value)
+    .split(' ')
+    .filter((token) => token.length >= 3 && !['the', 'and', 'for', 'with', 'from'].includes(token))
+}
+
+function scoreStreamMatch(stream, expectedTitle, expectedYear, type, season, episode) {
+  const sourceText = normalizeMatchText(`${stream?.title || ''} ${stream?.name || ''} ${stream?.behaviorHints?.filename || ''}`)
+  const tokens = titleTokens(expectedTitle)
+  if (!sourceText || !tokens.length) return 0
+
+  const matched = tokens.filter((token) => sourceText.includes(token)).length
+  let score = matched / tokens.length
+
+  if (expectedYear) {
+    const yearText = String(expectedYear)
+    const years = sourceText.match(/\b(?:19|20)\d{2}\b/g) || []
+    if (sourceText.includes(yearText)) score += 0.15
+    else if (years.length) score -= 0.35
+  }
+
+  if (type === 'series' && season && episode) {
+    const paddedSeason = String(season).padStart(2, '0')
+    const paddedEpisode = String(episode).padStart(2, '0')
+    const exactCode = [
+      `s${paddedSeason}e${paddedEpisode}`,
+      `s${season}e${episode}`,
+    ]
+    const seasonEpisodeCodes = sourceText.match(/s\d{1,2}e\d{1,2}/g) || []
+    if (exactCode.some((code) => sourceText.includes(code))) score += 0.25
+    else if (seasonEpisodeCodes.length) score -= 0.45
+
+    const episodeMarkers = [
+      `episode ${episode}`,
+      `ep ${episode}`,
+      `episode${episode}`,
+      `e${paddedEpisode}`,
+    ]
+    if (episodeMarkers.some((marker) => sourceText.includes(marker))) score += 0.1
+    if (episodeMarkers.length && /\b(?:episode|ep)\s*\d+\b/.test(sourceText) && !episodeMarkers.some((marker) => sourceText.includes(marker))) {
+      score -= 0.3
+    }
+  }
+
+  return Math.max(0, Math.min(1, score))
+}
+
+export function normalizeStream(stream, addon, index = 0, context = {}) {
   const url = String(stream?.url || '').trim()
   const kind = detectKind(stream)
   const title = String(stream?.title || stream?.name || 'Stream').trim()
   const behaviorHints = stream?.behaviorHints || {}
+  const quality = normalizeQuality(`${title} ${stream?.quality || ''}`)
+  const matchScore = scoreStreamMatch(
+    stream,
+    context.expectedTitle,
+    context.expectedYear,
+    context.type,
+    context.season,
+    context.episode,
+  )
+
   return {
     id: `${addon.id}-${index}-${encodeURIComponent(url || title)}`,
     addonId: addon.id,
@@ -204,7 +270,8 @@ export function normalizeStream(stream, addon, index = 0) {
     title,
     url,
     kind,
-    quality: normalizeQuality(`${title} ${stream?.quality || ''}`),
+    quality,
+    matchScore,
     subtitles: Array.isArray(stream?.subtitles) ? stream.subtitles : [],
     externalUrl: String(stream?.externalUrl || ''),
     infoHash: String(stream?.infoHash || ''),
@@ -216,18 +283,33 @@ export function normalizeStream(stream, addon, index = 0) {
 }
 
 function rankStreams(streams) {
+  const qualityPreference = (quality) => {
+    if (quality === 1080) return 100
+    if (quality === 720) return 90
+    if (quality === 1440) return 85
+    if (quality === 2160) return 80
+    if (quality === 576) return 70
+    if (quality === 480) return 60
+    return 50
+  }
+
   return [...streams].sort((a, b) => {
     const provider = (b.addonPriority || 0) - (a.addonPriority || 0)
     if (provider) return provider
-    const quality = (b.quality || 0) - (a.quality || 0)
+
+    const match = (b.matchScore || 0) - (a.matchScore || 0)
+    if (match) return match
+
+    const quality = qualityPreference(b.quality) - qualityPreference(a.quality)
     if (quality) return quality
+
     const hls = Number(b.kind === 'hls') - Number(a.kind === 'hls')
     if (hls) return hls
     return a.addonName.localeCompare(b.addonName)
   })
 }
 
-export async function fetchAddonStreams(addon, type, ids, timeoutMs = 7000) {
+export async function fetchAddonStreams(addon, type, ids, timeoutMs = 7000, context = {}) {
   const candidates = [...new Set([ids.imdbId, ids.tmdbId != null ? `tmdb:${ids.tmdbId}` : ''].filter(Boolean))]
   let lastError = null
 
@@ -236,7 +318,7 @@ export async function fetchAddonStreams(addon, type, ids, timeoutMs = 7000) {
       const url = buildResourceUrl(addon.manifestUrl, 'stream', type, candidate)
       const data = await fetchJson(url, timeoutMs)
       const streams = (Array.isArray(data?.streams) ? data.streams : [])
-        .map((stream, index) => normalizeStream(stream, addon, index))
+        .map((stream, index) => normalizeStream(stream, addon, index, context))
       if (streams.length) return streams
     } catch (error) {
       lastError = error
@@ -247,7 +329,7 @@ export async function fetchAddonStreams(addon, type, ids, timeoutMs = 7000) {
   return []
 }
 
-export async function findPlayableStreamsProgressive({ addons, type, ids, onUpdate }) {
+export async function findPlayableStreamsProgressive({ addons, type, ids, context = {}, onUpdate }) {
   const enabled = (addons || [])
     .filter((addon) => addon.enabled && addon.manifestUrl && addon.kind === 'stream')
     .sort((a, b) => Number(b.priority) - Number(a.priority))
@@ -263,7 +345,7 @@ export async function findPlayableStreamsProgressive({ addons, type, ids, onUpda
 
   await Promise.all(enabled.map(async (addon) => {
     try {
-      const streams = await fetchAddonStreams(addon, type, ids)
+      const streams = await fetchAddonStreams(addon, type, ids, 7000, context)
       all.push(...streams)
     } catch (error) {
       errors.push({ addon: addon.name, error: error?.message || 'Addon Unavailable.' })

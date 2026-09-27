@@ -58,3 +58,11 @@ The application uses TMDB for in-site movie/TV discovery, upcoming releases, tre
 ## Install As An App
 
 Watcher includes a web app manifest, app icons, standalone display mode, and a service worker. After deployment over HTTPS, use your browser's **Install App** / **Add To Home Screen** option. The installed shortcut opens Watcher as a standalone app rather than a normal browser tab.
+
+## Streaming Integration
+
+Watcher includes an optional Stremio-compatible browser streaming layer. It can query configured stream addons, prioritize configured providers, handle HTTP/HLS sources, load OpenSubtitles subtitle tracks, and support season/episode selection for series.
+
+For PenguPlay, set `VITE_PENGUPLAY_MANIFEST_URL` to the current authenticated manifest URL in your local `.env`. Do not commit that URL publicly because it can contain an authentication token.
+
+The browser player can only directly play browser-compatible HTTP/HLS media URLs. Torrent/info-hash or other non-web-ready addon results require a separate media service and are not treated as direct browser playback.

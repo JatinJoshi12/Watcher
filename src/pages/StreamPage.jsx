@@ -8,10 +8,22 @@ import StreamPlayer from '../components/StreamPlayer'
 import { Icon } from '../components/Icon'
 import { titleCaseText } from '../lib/utils'
 
-const PRIORITY_GRACE_MS = 1100
+const PRIORITY_GRACE_MS = 450
 
 function range(count) {
   return Array.from({ length: Math.max(1, Number(count) || 1) }, (_, index) => index + 1)
+}
+
+function mergePlayable(results) {
+  const streams = results.flatMap((result) => result?.playable || [])
+  return [...new Map(streams.filter((source) => source?.url).map((source) => [source.url, source])).values()]
+    .sort((a, b) => {
+      const provider = Number(b.addonPriority || 0) - Number(a.addonPriority || 0)
+      if (provider) return provider
+      const match = Number(b.matchScore || 0) - Number(a.matchScore || 0)
+      if (match) return match
+      return Number(b.quality || 0) - Number(a.quality || 0)
+    })
 }
 
 export default function StreamPage({ notify }) {
@@ -31,21 +43,23 @@ export default function StreamPage({ notify }) {
   })
   const [searchComplete, setSearchComplete] = useState(false)
   const [autoStart, setAutoStart] = useState(false)
-  const searchStartedAtRef = useRef(0)
   const searchRequestRef = useRef(0)
+  const priorityTimerRef = useRef(null)
+  const searchStateRef = useRef({ tmdb: null, imdb: null, imdbStarted: false })
 
   useEffect(() => {
     if (item?.type !== 'series' || !item.tmdb_id) return
     const season = selection.season
-    getSeasonDetails(item.tmdb_id, season).then((data) => {
-      setSeasonEpisodes(Array.isArray(data?.episodes) ? data.episodes : [])
-      if (data?.season_number && data.season_number !== selection.season) return
-      const firstEpisode = data?.episodes?.[0]?.episode_number || 1
-      setSelection((current) => ({
-        ...current,
-        episode: data?.episodes?.some((entry) => entry.episode_number === current.episode) ? current.episode : firstEpisode,
-      }))
-    }).catch(() => setSeasonEpisodes([]))
+    getSeasonDetails(item.tmdb_id, season)
+      .then((data) => {
+        setSeasonEpisodes(Array.isArray(data?.episodes) ? data.episodes : [])
+        const firstEpisode = data?.episodes?.[0]?.episode_number || 1
+        setSelection((current) => ({
+          ...current,
+          episode: data?.episodes?.some((entry) => entry.episode_number === current.episode) ? current.episode : firstEpisode,
+        }))
+      })
+      .catch(() => setSeasonEpisodes([]))
   }, [item?.tmdb_id, item?.type, selection.season])
 
   useEffect(() => {
@@ -54,69 +68,136 @@ export default function StreamPage({ notify }) {
       setTotalSeasons(Number(item.total_seasons))
       return
     }
-    getTitleDetails(item.tmdb_id, 'series').then((details) => {
-      if (Number(details.total_seasons) > 0) setTotalSeasons(Number(details.total_seasons))
-    }).catch(() => null)
+    getTitleDetails(item.tmdb_id, 'series')
+      .then((details) => {
+        if (Number(details.total_seasons) > 0) setTotalSeasons(Number(details.total_seasons))
+      })
+      .catch(() => null)
   }, [item])
 
   const loadSources = useCallback(async () => {
     if (!item?.tmdb_id) return
     const requestId = ++searchRequestRef.current
+    if (priorityTimerRef.current) window.clearTimeout(priorityTimerRef.current)
+    priorityTimerRef.current = null
     setSearchComplete(false)
     setAutoStart(false)
     setStreams([])
-    searchStartedAtRef.current = Date.now()
+    setSubtitles([])
+    searchStateRef.current = { tmdb: null, imdb: null, imdbStarted: false }
+
+    const addons = getStreamAddons()
+    const context = {
+      expectedTitle: item.title,
+      expectedYear: item.year,
+      type: item.type,
+      season: item.type === 'series' ? selection.season : undefined,
+      episode: item.type === 'series' ? selection.episode : undefined,
+    }
+
+    const pushResults = (key, result) => {
+      if (requestId !== searchRequestRef.current) return
+      searchStateRef.current[key] = result
+      const merged = mergePlayable([searchStateRef.current.tmdb, searchStateRef.current.imdb])
+      setStreams(merged)
+
+      if (merged.length && !autoStart) {
+        const hasPengu = merged.some((source) => source.addonId === 'penguplay')
+        if (hasPengu) {
+          if (priorityTimerRef.current) window.clearTimeout(priorityTimerRef.current)
+          priorityTimerRef.current = null
+          setAutoStart(true)
+        } else if (!priorityTimerRef.current) {
+          priorityTimerRef.current = window.setTimeout(() => {
+            priorityTimerRef.current = null
+            if (requestId === searchRequestRef.current) setAutoStart(true)
+          }, PRIORITY_GRACE_MS)
+        }
+      }
+
+      const tmdbComplete = searchStateRef.current.tmdb?.complete === true
+      const imdbComplete = searchStateRef.current.imdb?.complete === true
+      const imdbFinishedOrNotNeeded = searchStateRef.current.imdbStarted ? imdbComplete : false
+      if (tmdbComplete && imdbFinishedOrNotNeeded) {
+        setSearchComplete(true)
+        if (merged.length) setAutoStart(true)
+      }
+    }
+
+    const tmdbSearch = findPlayableStreamsProgressive({
+      addons,
+      type: item.type,
+      ids: { imdbId: '', tmdbId: item.tmdb_id },
+      context,
+      onUpdate: (result) => pushResults('tmdb', result),
+    }).catch(() => null)
+
+    const idsPromise = getExternalIds(item.tmdb_id, item.type)
+
+    const subtitleVideoIdPromise = idsPromise
+      .then((ids) => ids?.imdb_id
+        ? (item.type === 'series' ? `${ids.imdb_id}:${selection.season}:${selection.episode}` : ids.imdb_id)
+        : (item.type === 'series' ? `tmdb:${item.tmdb_id}:${selection.season}:${selection.episode}` : `tmdb:${item.tmdb_id}`))
+      .catch(() => (item.type === 'series' ? `tmdb:${item.tmdb_id}:${selection.season}:${selection.episode}` : `tmdb:${item.tmdb_id}`))
+
+    subtitleVideoIdPromise
+      .then((videoId) => findSubtitles({ type: item.type, videoId }))
+      .then((result) => {
+        if (requestId === searchRequestRef.current) setSubtitles(result.tracks || [])
+      })
+      .catch(() => null)
 
     try {
-      const ids = await getExternalIds(item.tmdb_id, item.type)
+      const ids = await idsPromise
       if (requestId !== searchRequestRef.current) return
 
-      findSubtitles({
-        type: item.type,
-        videoId: item.type === 'series'
-          ? `${ids.imdb_id || `tmdb:${ids.tmdb_id}`}:${selection.season}:${selection.episode}`
-          : (ids.imdb_id || `tmdb:${ids.tmdb_id}`),
-      }).then((result) => {
-        if (requestId === searchRequestRef.current) setSubtitles(result.tracks || [])
-      }).catch(() => null)
+      const imdbId = ids?.imdb_id
+        ? (item.type === 'series' ? `${ids.imdb_id}:${selection.season}:${selection.episode}` : ids.imdb_id)
+        : ''
 
-      const sourceResult = findPlayableStreamsProgressive({
-        addons: getStreamAddons(),
-        type: item.type,
-        ids: {
-          imdbId: item.type === 'series'
-            ? `${ids.imdb_id || `tmdb:${ids.tmdb_id}`}:${selection.season}:${selection.episode}`
-            : ids.imdb_id,
-          tmdbId: ids.tmdb_id,
-        },
-        onUpdate: ({ playable, complete }) => {
-          if (requestId !== searchRequestRef.current) return
-          setStreams(playable)
-          if (playable.length && (
-            playable.some((source) => source.addonId === 'penguplay')
-            || Date.now() - searchStartedAtRef.current >= PRIORITY_GRACE_MS
-            || complete
-          )) {
-            setAutoStart(true)
-          }
-          if (complete) setSearchComplete(true)
-        },
-      })
+      if (imdbId) {
+        searchStateRef.current.imdbStarted = true
+        const imdbSearch = findPlayableStreamsProgressive({
+          addons,
+          type: item.type,
+          ids: { imdbId, tmdbId: ids.tmdb_id || item.tmdb_id },
+          context,
+          onUpdate: (result) => pushResults('imdb', result),
+        })
 
-      const result = await sourceResult
+        imdbSearch
+          .then((result) => pushResults('imdb', result))
+          .catch(() => pushResults('imdb', { playable: [], complete: true }))
+      } else {
+        searchStateRef.current.imdbStarted = false
+      }
+
+      const tmdbResult = await tmdbSearch
       if (requestId !== searchRequestRef.current) return
-      setStreams(result.playable)
-      setSearchComplete(true)
-      if (result.playable.length && !autoStart) setAutoStart(true)
+      if (tmdbResult) pushResults('tmdb', tmdbResult)
+
+      if (!imdbId) {
+        setSearchComplete(true)
+        const merged = mergePlayable([searchStateRef.current.tmdb])
+        if (merged.length) setAutoStart(true)
+      }
     } catch (error) {
+      const tmdbResult = await tmdbSearch.catch(() => null)
       if (requestId !== searchRequestRef.current) return
-      setSearchComplete(true)
-      notify?.(error.message || 'Unable To Find Streaming Sources.', 'error')
+      if (tmdbResult) pushResults('tmdb', tmdbResult)
+      if (!searchStateRef.current.imdbStarted) setSearchComplete(true)
+      if (!tmdbResult?.playable?.length && !searchStateRef.current.imdbStarted) {
+        notify?.(error.message || 'Unable To Find Streaming Sources.', 'error')
+      }
     }
   }, [item, notify, selection.episode, selection.season])
 
   useEffect(() => {
     loadSources()
+    return () => {
+      if (priorityTimerRef.current) window.clearTimeout(priorityTimerRef.current)
+      priorityTimerRef.current = null
+    }
   }, [loadSources])
 
   if (!item || !list) {
@@ -157,7 +238,15 @@ export default function StreamPage({ notify }) {
           </div>
         ) : null}
       </div>
-      <StreamPlayer streams={streams} subtitleTracks={subtitles} discoveryComplete={searchComplete} autoStart={autoStart} onSuccess={() => null} onAllFailed={() => { if (searchComplete) notify?.('Playback Failed. No Other Browser Source Is Available.', 'error') }} />
+      <StreamPlayer
+        playbackKey={`${item.id}:${item.type}:${selection.season}:${selection.episode}`}
+        streams={streams}
+        subtitleTracks={subtitles}
+        discoveryComplete={searchComplete}
+        autoStart={autoStart}
+        onSuccess={() => null}
+        onAllFailed={() => { if (searchComplete) notify?.('Playback Failed. No Other Browser Source Is Available.', 'error') }}
+      />
     </div>
   )
 }
