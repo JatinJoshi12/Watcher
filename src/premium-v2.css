@@ -7898,465 +7898,133 @@ html:has(.auth-page.signup-auth-page) {
   }
 }
 
-/* =========================================================
-   STREAMING INTEGRATION
-   ========================================================= */
-.watcher-saved-actions {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 36px 36px !important;
-}
-
+/* Final one-click streaming surface. */
 .watcher-stream-card-action {
-  min-height: 36px;
-  padding: 0 10px;
+  min-height: 34px;
+  padding: 0 11px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  border: 1px solid rgba(244,200,78,.32);
-  border-radius: 8px;
-  background: rgba(244,200,78,.13);
-  color: #f5d873;
-  font-size: 8px;
+  gap: 6px;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 10px;
+  background: rgba(255,255,255,.07);
+  color: #fff;
+  font-size: 11px;
   font-weight: 900;
+  letter-spacing: .02em;
   cursor: pointer;
 }
-.watcher-stream-card-action:hover {
-  background: rgba(244,200,78,.22);
-  border-color: rgba(244,200,78,.52);
-}
+.watcher-stream-card-action:hover { background: rgba(255,255,255,.12); }
 
-.watcher-stream-section {
-  margin-top: 28px;
-  padding: 22px;
-  border: 1px solid rgba(244,200,78,.18);
-  border-radius: 18px;
-  background: linear-gradient(180deg, rgba(12,13,17,.82), rgba(6,7,9,.72));
-  box-shadow: 0 22px 54px rgba(0,0,0,.22);
+.watcher-stream-page {
+  min-height: 100vh;
+  background: #050608;
+  color: #fff;
+  padding: 18px 22px 28px;
 }
-.watcher-stream-header {
+.watcher-stream-topbar {
+  max-width: 1440px;
+  margin: 0 auto 16px;
+  min-height: 60px;
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 18px;
+  align-items: center;
+  gap: 14px;
 }
-.watcher-stream-header h2 {
-  margin: 5px 0 7px;
-  font-size: clamp(24px, 3vw, 38px);
-  line-height: 1;
-  letter-spacing: -.045em;
-  font-weight: 900;
-}
-.watcher-stream-header p {
-  margin: 0;
-  color: #9298a0;
-  font-size: 11px;
-  line-height: 1.7;
-  font-weight: 650;
-}
-.watcher-stream-count-card {
-  min-width: 92px;
-  padding: 15px 12px;
+.watcher-stream-back {
+  width: 44px;
+  height: 44px;
   display: grid;
   place-items: center;
-  gap: 2px;
-  border: 1px solid rgba(244,200,78,.24);
-  border-radius: 14px;
-  background: rgba(244,200,78,.05);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 12px;
+  background: rgba(255,255,255,.05);
+  color: #fff;
+  cursor: pointer;
 }
-.watcher-stream-count-card strong {
-  font-size: 27px;
+.watcher-stream-heading { flex: 1; min-width: 0; }
+.watcher-stream-heading h1 {
+  margin: 4px 0 0;
+  font-size: clamp(24px, 3.2vw, 42px);
   line-height: 1;
-  color: #f5d873;
-}
-.watcher-stream-count-card span {
-  font-size: 7px;
-  font-weight: 900;
-  letter-spacing: .15em;
-  color: #8c929a;
+  letter-spacing: -.04em;
+  font-weight: 950;
 }
 .watcher-stream-episode-controls {
-  margin-top: 18px;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
   gap: 10px;
+  align-items: end;
 }
-.watcher-stream-episode-controls label {
-  display: grid;
-  gap: 7px;
-  color: #949aa2;
-  font-size: 8px;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: .12em;
-}
-.watcher-stream-episode-controls select,
-.watcher-player-toolbar select,
-.watcher-addon-row-controls input {
-  width: 100%;
-  min-height: 42px;
-  padding: 0 12px;
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 9px;
-  background: rgba(255,255,255,.035);
-  color: #f2f3f4;
-  font: inherit;
-  outline: none;
-}
-.watcher-stream-episode-controls select:focus,
-.watcher-player-toolbar select:focus,
-.watcher-addon-row-controls input:focus {
-  border-color: rgba(244,200,78,.45);
-  box-shadow: 0 0 0 3px rgba(244,200,78,.08);
-}
-.watcher-stream-primary-actions {
-  margin-top: 18px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.watcher-stream-play-button {
-  min-width: 190px;
-  min-height: 50px;
-  font-size: 12px !important;
-}
-.watcher-stream-status {
-  margin-top: 12px;
-  min-height: 46px;
-  padding: 11px 13px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 10px;
-  background: rgba(255,255,255,.025);
-  color: #b6bbc2;
-}
-.watcher-stream-status > span {
-  width: 20px;
-  height: 20px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: rgba(255,255,255,.07);
-  color: #f3f4f5;
-  font-weight: 900;
-}
-.watcher-stream-status strong {
+.watcher-stream-episode-controls label { display: grid; gap: 5px; }
+.watcher-stream-episode-controls label span {
   font-size: 10px;
   font-weight: 900;
-}
-.watcher-stream-status.ready {
-  border-color: rgba(113,212,155,.22);
-  color: #a9dfbe;
-}
-.watcher-stream-status.ready > span {
-  background: rgba(113,212,155,.12);
-  color: #9ce2b6;
-}
-.watcher-stream-status.warning {
-  border-color: rgba(244,200,78,.2);
-}
-.watcher-stream-status em {
-  color: #8d939a;
-  font-size: 8px;
-  font-style: normal;
-}
-.watcher-stream-player {
-  margin-top: 16px;
-  overflow: hidden;
-  border: 1px solid rgba(255,255,255,.10);
-  border-radius: 15px;
-  background: #050608;
-}
-.watcher-stream-player.is-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-}
-.watcher-stream-player-header {
-  padding: 15px 17px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  border-bottom: 1px solid rgba(255,255,255,.07);
-}
-.watcher-stream-player-header h2 {
-  margin: 3px 0 3px;
-  max-width: 920px;
-  font-size: 17px;
-  line-height: 1.18;
-  font-weight: 900;
-}
-.watcher-stream-player-header p {
-  margin: 0;
-  color: #8c9299;
-  font-size: 8px;
-  font-weight: 800;
   text-transform: uppercase;
   letter-spacing: .08em;
+  color: #9298a1;
 }
-.watcher-video-shell {
+.watcher-stream-episode-controls select {
+  min-height: 42px;
+  min-width: 132px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 10px;
+  background: rgba(255,255,255,.06);
+  color: #fff;
+  padding: 0 12px;
+  font-weight: 850;
+}
+.watcher-one-click-player {
+  max-width: 1440px;
+  margin: 0 auto;
+}
+.watcher-one-click-video-shell {
   position: relative;
+  width: 100%;
   aspect-ratio: 16 / 9;
-  min-height: 280px;
+  min-height: 320px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 18px;
   background: #000;
+  box-shadow: 0 32px 100px rgba(0,0,0,.45);
 }
-.watcher-video {
+.watcher-one-click-video {
   width: 100%;
   height: 100%;
   display: block;
   background: #000;
+  object-fit: contain;
 }
-.watcher-video-overlay {
+.watcher-one-click-overlay {
   position: absolute;
   inset: 0;
   display: grid;
   place-items: center;
-  background: linear-gradient(rgba(0,0,0,.18), rgba(0,0,0,.52));
-  color: #f4f4f5;
-  font-size: 11px;
-  font-weight: 900;
   pointer-events: none;
+  color: #fff;
+  font-weight: 900;
+  font-size: 15px;
+  background: linear-gradient(180deg, rgba(0,0,0,.08), rgba(0,0,0,.32));
 }
-.watcher-player-toolbar {
-  min-height: 48px;
-  padding: 9px 13px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  border-top: 1px solid rgba(255,255,255,.07);
-  color: #8c929a;
-  font-size: 8px;
+.watcher-one-click-sound {
+  margin-top: 12px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid rgba(255,255,255,.13);
+  border-radius: 10px;
+  background: rgba(255,255,255,.06);
+  color: #fff;
   font-weight: 850;
-}
-.watcher-player-toolbar label {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-.watcher-player-toolbar select {
-  width: auto;
-  min-width: 120px;
-  min-height: 32px;
-  padding: 0 9px;
-  font-size: 9px;
-}
-.watcher-stream-player-error {
-  padding: 11px 13px;
-  display: grid;
-  gap: 3px;
-  border-top: 1px solid rgba(238,109,109,.16);
-  background: rgba(238,109,109,.055);
-}
-.watcher-stream-player-error strong {
-  color: #efb0b0;
-  font-size: 9px;
-}
-.watcher-stream-player-error span {
-  color: #a18787;
-  font-size: 8px;
-}
-.watcher-stream-errors {
-  margin-top: 10px;
-  color: #9298a0;
-  font-size: 8px;
-}
-.watcher-stream-errors summary {
   cursor: pointer;
-  font-weight: 900;
 }
-.watcher-stream-errors > div {
-  margin-top: 7px;
-  display: grid;
-  gap: 5px;
-}
-.watcher-stream-errors span {
-  display: block;
-  padding: 7px 9px;
-  border-radius: 7px;
-  background: rgba(255,255,255,.03);
-}
-.watcher-stream-note {
-  margin-top: 9px;
-  color: #777d85;
-  font-size: 8px;
-}
-.watcher-next-watch-panel {
-  margin-top: 18px;
-  padding-top: 18px;
-  border-top: 1px solid rgba(255,255,255,.08);
-}
-.watcher-stream-subheading h3 {
-  margin: 4px 0 0;
-  font-size: 19px;
-  font-weight: 900;
-  letter-spacing: -.025em;
-}
-.watcher-next-watch-list {
-  margin-top: 10px;
-  display: grid;
-  gap: 7px;
-}
-.watcher-next-watch-item {
-  min-height: 44px;
-  padding: 9px 11px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  border: 1px solid rgba(255,255,255,.07);
-  border-radius: 9px;
-  background: rgba(255,255,255,.025);
-  color: #d6d8dc;
-  text-decoration: none;
-  font-size: 9px;
-  font-weight: 800;
-}
-.watcher-next-watch-item:hover {
-  border-color: rgba(244,200,78,.24);
-  background: rgba(244,200,78,.045);
-}
-
-.watcher-addon-settings-card {
-  margin-top: 20px;
-  padding: 22px;
-  border: 1px solid rgba(255,255,255,.11);
-  border-radius: 18px;
-  background: rgba(6,7,10,.68);
-}
-.watcher-addon-settings-heading {
-  display: flex;
-  justify-content: space-between;
-  gap: 18px;
-  align-items: flex-start;
-}
-.watcher-addon-settings-heading h2 {
-  margin: 6px 0 6px;
-  font-size: 28px;
-  font-weight: 900;
-  letter-spacing: -.04em;
-}
-.watcher-addon-settings-heading p {
-  margin: 0;
-  color: #8d939a;
-  font-size: 10px;
-}
-.watcher-addon-group {
-  margin-top: 24px;
-}
-.watcher-addon-group-heading {
-  padding-bottom: 9px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 10px;
-  border-bottom: 1px solid rgba(255,255,255,.07);
-}
-.watcher-addon-group-heading div {
-  display: grid;
-  gap: 3px;
-}
-.watcher-addon-group-heading strong {
-  color: #f0f1f2;
-  font-size: 12px;
-  font-weight: 900;
-}
-.watcher-addon-group-heading span {
-  color: #7f858d;
-  font-size: 8px;
-}
-.watcher-addon-list {
-  margin-top: 8px;
-  display: grid;
-  gap: 8px;
-}
-.watcher-addon-row {
-  padding: 13px;
-  border: 1px solid rgba(255,255,255,.07);
-  border-radius: 11px;
-  background: rgba(255,255,255,.02);
-}
-.watcher-addon-row-top {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: flex-start;
-}
-.watcher-addon-row-top > div {
-  display: grid;
-  gap: 4px;
-}
-.watcher-addon-row-top strong {
-  color: #eceef0;
-  font-size: 10px;
-  font-weight: 900;
-}
-.watcher-addon-row-top span {
-  color: #7d838b;
-  font-size: 8px;
-  line-height: 1.5;
-}
-.watcher-addon-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: #999fa7;
-  font-size: 8px;
-  font-weight: 900;
-  white-space: nowrap;
-}
-.watcher-addon-row-controls {
-  margin-top: 9px;
-  display: grid;
-  grid-template-columns: minmax(0,1fr) auto;
-  gap: 7px;
-}
-.watcher-addon-row-controls input {
-  min-height: 38px;
-  font-size: 8px;
-}
-
+.watcher-stream-page-error { display: grid; place-items: center; padding-top: 14vh; }
+.watcher-stream-fallback { text-align: center; }
 @media (max-width: 780px) {
-  .watcher-stream-header,
-  .watcher-addon-settings-heading {
-    flex-direction: column;
-  }
-  .watcher-stream-count-card {
-    min-width: 0;
-    width: 100%;
-    grid-template-columns: auto auto;
-    justify-content: center;
-    gap: 7px;
-  }
-  .watcher-stream-episode-controls {
-    grid-template-columns: 1fr;
-  }
-  .watcher-stream-play-button {
-    width: 100%;
-  }
-  .watcher-addon-row-controls {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 560px) {
-  .watcher-saved-actions {
-    grid-template-columns: minmax(0,1fr) 36px 36px !important;
-  }
-  .watcher-stream-card-action {
-    grid-column: 1 / -1;
-  }
-  .watcher-stream-section,
-  .watcher-addon-settings-card {
-    padding: 15px;
-  }
-  .watcher-video-shell {
-    min-height: 190px;
-  }
+  .watcher-stream-page { padding: 10px 10px 18px; }
+  .watcher-stream-topbar { align-items: flex-start; flex-wrap: wrap; }
+  .watcher-stream-heading { order: 2; flex-basis: calc(100% - 60px); }
+  .watcher-stream-episode-controls { order: 3; flex-basis: 100%; }
+  .watcher-stream-episode-controls label { flex: 1; }
+  .watcher-stream-episode-controls select { width: 100%; min-width: 0; }
+  .watcher-one-click-video-shell { min-height: 220px; border-radius: 12px; }
 }

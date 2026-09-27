@@ -5,12 +5,11 @@ import Poster from '../components/Poster'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { Icon } from '../components/Icon'
 import { titleCaseText } from '../lib/utils'
-import StreamSourcePanel from '../components/StreamSourcePanel'
 
 export default function Detail({ notify }) {
   const { watchlistId, itemId } = useParams()
   const navigate = useNavigate()
-  const { watchlists, items, deleteItem, updateItem } = useLibrary()
+  const { watchlists, items, deleteItem } = useLibrary()
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [busy, setBusy] = useState(false)
 
@@ -72,9 +71,10 @@ export default function Detail({ notify }) {
               <p>{titleCaseText(item.description || 'No Description Added.')}</p>
             </section>
 
-            <StreamSourcePanel item={item} notify={notify} onUpdateItem={updateItem} />
-
             <div className="watcher-detail-actions">
+              <button className="watcher-primary-button" onClick={() => navigate(`/watchlists/${watchlistId}/items/${itemId}/stream`)} disabled={busy}>
+                <Icon name="play" size={15} /> Stream
+              </button>
               <button className="watcher-danger-button" onClick={() => setDeleteOpen(true)} disabled={busy}>
                 <Icon name="trash" size={15} /> Delete Title
               </button>

@@ -1,438 +1,300 @@
-const STORAGE_KEY = 'watcher_stream_addons_v3'
-const LEGACY_KEYS = ['watcher_stream_addons_v2', 'watcher_stream_addons', 'watcher_addons']
-const manifestCache = new Map()
-const streamCache = new Map()
+const ADDON_STORAGE_KEY = 'watcher_stream_addons_v1'
+const LEGACY_KEYS = [
+  'watcher_stream_addons',
+  'watcher_addons',
+  'watcher-stremio-addons',
+  'watcher_stream_addons_v2',
+  'watcher_stremio_addons',
+  'watcher_addon_manifests',
+]
 
-export const STREAM_ADDON_DEFINITIONS = [
-  {
-    id: 'penguplay',
-    name: 'PenguPlay',
-    description: 'Direct HTTP stream addon. Uses your configured authenticated manifest.',
-    kind: 'stream',
-    priority: 100,
-    manifestUrl: import.meta.env?.VITE_PENGUPLAY_MANIFEST_URL?.trim() || '',
-  },
+const DEFAULT_ADDONS = [
   {
     id: 'showbox',
     name: 'Showbox',
-    description: 'Direct HTTP movie and series streams.',
-    kind: 'stream',
-    priority: 80,
     manifestUrl: 'https://showbox.codiv.dpdns.org/manifest.json',
+    priority: 400,
+    kind: 'stream',
+    enabled: true,
   },
   {
     id: 'hdhub',
     name: 'HdHub',
-    description: 'Movie and series stream addon.',
-    kind: 'stream',
-    priority: 90,
     manifestUrl: 'https://hdhub.thevolecitor.qzz.io/eyJ0b3Jib3giOiJ1bnNldCIsInF1YWxpdGllcyI6IjIxNjBwLDEwODBwLDcyMHAiLCJzb3J0IjoiZGVzYyIsImNhdGFsb2dzIjoiIn0/manifest.json',
+    priority: 500,
+    kind: 'stream',
+    enabled: true,
   },
   {
     id: 'webstreamrmbg',
     name: 'WebStreamrMBG',
-    description: 'HTTP stream addon for movies and series.',
-    kind: 'stream',
-    priority: 70,
     manifestUrl: 'https://87d6a6ef6b58-webstreamrmbg.baby-beamup.club/%7B%22multi%22%3A%22on%22%7D/manifest.json',
+    priority: 300,
+    kind: 'stream',
+    enabled: true,
   },
   {
     id: 'flix-streams-free',
     name: 'Flix-Streams Free',
-    description: 'Movie and series stream addon with HTTP-capable providers.',
+    manifestUrl: 'https://free.flixnest.app/eNqNUdFuwjAM_Jc8UwkVxEN_ZUJWSNzVwkkqxynapv37AoXBCg97inLnu1zOXwYwZ4xKloFpQsCp3jJY5nQCz1kFbcgQUU9JjqZTKbgy0AsiZDdgsKYz7brdrXdt28zqpidWlGZM-XxMG7MydytnFd-TEGbTve3_MIONERlm-RNN0XHxCNYXVtP1lnONgtEeGGF7HPxQDreAV9Rb4o-QlFJcMjfbBf6yjv_MPJTlSdDpQnSJty2_6AsPyGMSvf6bYta6BSBfC64FPowpBYQ-SbB6Ln87PNOfKWLlRkkTeRTg5CzXsVE0UAnzozpB2BTIqYi7bONettl__wDqFspC/manifest.json',
+    priority: 200,
     kind: 'stream',
-    priority: 60,
-    manifestUrl: 'https://free.flixnest.app/eNqNUdFuwjAM_Jc8UwkVxEN_ZUJWSNzVwkkqxynapv37AoXBCg97inLnu1zOXwYwZ4xKloFpQsCp3jJY5nQCz1kFbcgQUU9JjqZTKbgy0AsiZDdgsKYz7brdrXdt28zqpidWlGZM-XxMG7MydytnFd-TEGbTve3_MIONERlm-RNN0XHxCNYXVtP1lnONgtEeGGF7HPxQDreAV9Rb4o-QlFJcMjfbBf6yjv_MPJTlSdDpQnSJty2_6AsPyGMSvf6bYta6BSBfC64FPowpBYQ-SbB6Ln87PNOfKWLlRkkTeRTg5CzXsVEwUAnzozpB2BTIqYi7bONettl__wDqFspC/manifest.json',
-  },
-  {
-    id: 'opensubtitles-pro',
-    name: 'OpenSubtitles PRO',
-    description: 'English subtitle provider for movies and series.',
-    kind: 'subtitles',
-    manifestUrl: 'https://opensubtitlesv3-pro.dexter21767.com/eyJsYW5ncyI6WyJlbmdsaXNoIl0sInNvdXJjZSI6ImFsbCIsImFpVHJhbnNsYXRlZCI6dHJ1ZSwiYXV0b0FkanVzdG1lbnQiOmZhbHNlfQ==/manifest.json',
-  },
-  {
-    id: 'watch-next',
-    name: 'Watch Next',
-    description: 'Recommendation source for related movies and series.',
-    kind: 'next',
-    manifestUrl: 'https://099757617587-watch-next.baby-beamup.club/manifest.json',
+    enabled: true,
   },
 ]
 
-function normalizeManifestUrl(value) {
-  const raw = String(value || '').trim()
-  if (!raw) return ''
-  if (/\/manifest\.json(?:[?#].*)?$/i.test(raw)) return raw
-  return `${raw.replace(/\/+$/, '')}/manifest.json`
+function safeStorage() {
+  try {
+    return typeof window !== 'undefined' ? window.localStorage : null
+  } catch {
+    return null
+  }
 }
 
-function normalizeStoredAddon(addon, fallback) {
+function normalizeAddon(addon, fallbackIndex = 0) {
+  if (!addon || typeof addon !== 'object') return null
+  const manifestUrl = String(addon.manifestUrl || addon.url || '').trim()
+  if (!/^https?:\/\//i.test(manifestUrl)) return null
+  const id = String(addon.id || `custom-${fallbackIndex}-${manifestUrl}`).trim()
   return {
-    ...fallback,
-    ...(addon || {}),
-    id: fallback.id,
-    name: fallback.name,
-    description: fallback.description,
-    kind: fallback.kind,
-    manifestUrl: normalizeManifestUrl(addon?.manifestUrl ?? fallback.manifestUrl),
-    priority: Number(fallback.priority) || 0,
-    enabled: addon?.enabled !== false,
+    id,
+    name: String(addon.name || `Addon ${fallbackIndex + 1}`).trim(),
+    manifestUrl,
+    priority: Number.isFinite(Number(addon.priority)) ? Number(addon.priority) : 0,
+    kind: addon.kind === 'subtitle' ? 'subtitle' : 'stream',
+    enabled: addon.enabled !== false,
   }
 }
 
 function readStoredAddons() {
-  if (typeof window === 'undefined') return []
+  const storage = safeStorage()
+  if (!storage) return []
 
-  for (const key of [STORAGE_KEY, ...LEGACY_KEYS]) {
+  const current = storage.getItem(ADDON_STORAGE_KEY)
+  if (current) {
     try {
-      const raw = window.localStorage.getItem(key)
-      const parsed = raw ? JSON.parse(raw) : null
-      if (Array.isArray(parsed) && parsed.length) return parsed
+      const parsed = JSON.parse(current)
+      if (Array.isArray(parsed)) return parsed.map(normalizeAddon).filter(Boolean)
     } catch {
-      // Try the next legacy key.
+      // Fall through to legacy migration.
     }
   }
+
+  for (const key of LEGACY_KEYS) {
+    const raw = storage.getItem(key)
+    if (!raw) continue
+    try {
+      const parsed = JSON.parse(raw)
+      const values = Array.isArray(parsed) ? parsed : []
+      const migrated = values.map(normalizeAddon).filter(Boolean)
+      if (migrated.length) {
+        storage.setItem(ADDON_STORAGE_KEY, JSON.stringify(migrated))
+        return migrated
+      }
+    } catch {
+      // Ignore malformed legacy state.
+    }
+  }
+
   return []
 }
 
+function getPenguManifest() {
+  const envUrl = String(import.meta.env?.VITE_PENGUPLAY_MANIFEST_URL || '').trim()
+  if (envUrl) return envUrl
+
+  const storage = safeStorage()
+  if (!storage) return ''
+  return String(storage.getItem('watcher_pengupay_manifest_url') || storage.getItem('watcher_penguplay_manifest_url') || '').trim()
+}
+
 export function getStreamAddons() {
-  const saved = readStoredAddons()
-  return STREAM_ADDON_DEFINITIONS.map((definition) => {
-    const existing = saved.find((addon) => addon?.id === definition.id)
-    return normalizeStoredAddon(existing, definition)
-  })
+  const stored = readStoredAddons()
+  const combined = [...DEFAULT_ADDONS, ...stored]
+  const penguManifest = getPenguManifest()
+  if (penguManifest) {
+    combined.unshift({
+      id: 'penguplay',
+      name: 'PenguPlay',
+      manifestUrl: penguManifest,
+      priority: 600,
+      kind: 'stream',
+      enabled: true,
+    })
+  }
+
+  const seen = new Set()
+  return combined
+    .map(normalizeAddon)
+    .filter(Boolean)
+    .filter((addon) => {
+      if (seen.has(addon.manifestUrl)) return false
+      seen.add(addon.manifestUrl)
+      return true
+    })
+    .sort((a, b) => b.priority - a.priority)
 }
 
-export function saveStreamAddons(addons) {
-  const normalized = STREAM_ADDON_DEFINITIONS.map((definition) => {
-    const current = addons.find((addon) => addon?.id === definition.id)
-    return normalizeStoredAddon(current, definition)
-  })
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized))
-  return normalized
-}
-
-export function updateStreamAddon(id, patch) {
-  return saveStreamAddons(getStreamAddons().map((addon) => (
-    addon.id === id ? { ...addon, ...patch } : addon
-  )))
-}
-
-export function resetStreamAddons() {
-  window.localStorage.removeItem(STORAGE_KEY)
+export function getAllConfiguredAddons() {
   return getStreamAddons()
 }
 
-async function fetchJson(url, signal) {
-  const response = await fetch(url, {
-    headers: { Accept: 'application/json' },
-    signal,
-  })
-  if (!response.ok) throw new Error(`Request Failed (${response.status})`)
-  return response.json()
+export function saveStreamAddons(addons) {
+  const storage = safeStorage()
+  if (!storage) return
+  const normalized = (Array.isArray(addons) ? addons : []).map(normalizeAddon).filter(Boolean)
+  storage.setItem(ADDON_STORAGE_KEY, JSON.stringify(normalized))
 }
 
-export async function fetchAddonManifest(manifestUrl, timeoutMs = 9000) {
-  const url = normalizeManifestUrl(manifestUrl)
-  if (!url) throw new Error('Manifest URL Is Empty.')
-  const cached = manifestCache.get(url)
-  if (cached && cached.expiresAt > Date.now()) return cached.manifest
-
-  const controller = new AbortController()
-  const timeout = window.setTimeout(() => controller.abort(), timeoutMs)
-  try {
-    const manifest = await fetchJson(url, controller.signal)
-    manifestCache.set(url, { manifest, expiresAt: Date.now() + 10 * 60 * 1000 })
-    return manifest
-  } catch (error) {
-    if (error?.name === 'AbortError') throw new Error('Manifest Request Timed Out.')
-    if (error instanceof TypeError) throw new Error('Manifest Blocked By Browser CORS Or Network Policy.')
-    throw error
-  } finally {
-    window.clearTimeout(timeout)
-  }
-}
-
-function resourceObjects(manifest, name) {
-  if (!Array.isArray(manifest?.resources)) return []
-  return manifest.resources
-    .filter((resource) => typeof resource === 'object' ? resource?.name === name : resource === name)
-    .map((resource) => typeof resource === 'string' ? { name: resource } : resource)
-}
-
-function supportsIdPrefix(resource, videoId) {
-  const prefixes = Array.isArray(resource?.idPrefixes) ? resource.idPrefixes : []
-  if (!prefixes.length) return true
-  return prefixes.some((prefix) => String(videoId).startsWith(String(prefix)))
-}
-
-export function addonSupportsStreams(manifest, type, videoId = '') {
-  return resourceObjects(manifest, 'stream').some((resource) => {
-    const types = Array.isArray(resource.types) ? resource.types : manifest.types
-    const typeOkay = !Array.isArray(types) || types.length === 0 || types.includes(type)
-    return typeOkay && supportsIdPrefix(resource, videoId)
-  })
-}
-
-function hasPrefix(prefixes, value) {
-  return prefixes.some((prefix) => String(prefix).toLowerCase() === value)
-}
-
-function chooseVideoId(manifest, type, ids) {
-  const resource = resourceObjects(manifest, 'stream').find((entry) => {
-    const types = Array.isArray(entry.types) ? entry.types : manifest.types
-    const typeOkay = !Array.isArray(types) || !types.length || types.includes(type)
-    return typeOkay
-  })
-  const prefixes = Array.isArray(resource?.idPrefixes) && resource.idPrefixes.length
-    ? resource.idPrefixes
-    : (Array.isArray(manifest?.idPrefixes) ? manifest.idPrefixes : [])
-
-  if (ids.imdbId && (!prefixes.length || prefixes.some((prefix) => ids.imdbId.startsWith(String(prefix))))) {
-    return ids.imdbId
-  }
-
-  if (ids.tmdbId != null && (hasPrefix(prefixes, 'tmdb') || hasPrefix(prefixes, 'tmdb:'))) {
-    return `tmdb:${ids.tmdbId}`
-  }
-
-  return ids.imdbId || (ids.tmdbId != null ? `tmdb:${ids.tmdbId}` : '')
-}
-
-function encodeVideoId(videoId) {
-  return String(videoId)
-    .split(':')
-    .map((segment) => encodeURIComponent(segment))
-    .join(':')
-}
-
-export function buildStreamUrl(manifestUrl, type, videoId) {
-  const url = new URL(normalizeManifestUrl(manifestUrl))
-  url.pathname = `${url.pathname.replace(/\/manifest\.json$/i, '')}/stream/${encodeURIComponent(type)}/${encodeVideoId(videoId)}.json`
+function buildResourceUrl(manifestUrl, resource, type, videoId) {
+  const url = new URL(manifestUrl)
+  const marker = '/manifest.json'
+  const index = url.pathname.lastIndexOf(marker)
+  if (index < 0) throw new Error('Addon Manifest URL Must End With /manifest.json.')
+  const prefix = url.pathname.slice(0, index)
+  url.pathname = `${prefix}/${resource}/${type}/${String(videoId)}`.replace(/\/\/{2,}/g, '/') + '.json'
   return url.toString()
 }
 
-export function buildSubtitlesUrl(manifestUrl, type, videoId) {
-  const url = new URL(normalizeManifestUrl(manifestUrl))
-  url.pathname = `${url.pathname.replace(/\/manifest\.json$/i, '')}/subtitles/${encodeURIComponent(type)}/${encodeVideoId(videoId)}.json`
-  return url.toString()
-}
-
-async function fetchStreamResponse(url, timeoutMs) {
+async function fetchJson(url, timeoutMs = 7000) {
   const controller = new AbortController()
-  const timeout = window.setTimeout(() => controller.abort(), timeoutMs)
+  const timer = window.setTimeout(() => controller.abort(), timeoutMs)
   try {
-    return await fetchJson(url, controller.signal)
-  } catch (error) {
-    if (error?.name === 'AbortError') throw new Error('Stream Request Timed Out.')
-    if (error instanceof TypeError) throw new Error('Stream Request Blocked By Browser CORS Or Network Policy.')
-    throw error
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: { Accept: 'application/json' },
+    })
+    if (!response.ok) throw new Error(`Addon Request Failed (${response.status}).`)
+    return await response.json()
   } finally {
-    window.clearTimeout(timeout)
+    window.clearTimeout(timer)
   }
 }
 
-function cacheKey(addon, type, videoId) {
-  return `${addon.id}|${addon.manifestUrl}|${type}|${videoId}`
-}
-
-function normalizeAddonStreamResult(data, addon, manifest, videoId) {
-  const streams = Array.isArray(data?.streams) ? data.streams : []
-  return {
-    manifest,
-    videoId,
-    streams: streams.map((stream, index) => normalizeStream(stream, addon, manifest, index)),
-  }
-}
-
-export async function fetchAddonStreams(addon, type, ids, timeoutMs = 7000) {
-  const candidates = [
-    ids.imdbId || '',
-    ids.tmdbId != null ? `tmdb:${ids.tmdbId}` : '',
-  ].filter(Boolean)
-  const keyBase = `${addon.id}|${addon.manifestUrl}|${type}|`
-  const now = Date.now()
-
-  for (const candidate of candidates) {
-    const cached = streamCache.get(`${keyBase}${candidate}`)
-    if (cached && cached.expiresAt > now) return cached.result
-  }
-
-  // Fast path: try all plausible IDs in parallel. Most addons accept IMDb IDs,
-  // while a few configured addons accept a TMDB-prefixed ID instead.
-  const attempts = await Promise.allSettled(
-    candidates.map((candidate) =>
-      fetchStreamResponse(
-        buildStreamUrl(addon.manifestUrl, type, candidate),
-        Math.min(timeoutMs, 4500),
-      ).then((data) => ({ candidate, data }))
-    )
-  )
-
-  let lastError = null
-  for (const attempt of attempts) {
-    if (attempt.status !== 'fulfilled') {
-      lastError = attempt.reason
-      continue
-    }
-    const { candidate, data } = attempt.value
-    if (Array.isArray(data?.streams) && data.streams.length) {
-      const result = normalizeAddonStreamResult(data, addon, {}, candidate)
-      streamCache.set(`${keyBase}${candidate}`, { result, expiresAt: Date.now() + 20_000 })
-      return result
-    }
-    lastError = new Error('Addon Returned No Streams For This ID.')
-  }
-
-  // Compatibility path: inspect the manifest only when the fast path fails.
-  const manifest = await fetchAddonManifest(addon.manifestUrl, Math.min(timeoutMs, 6000))
-  const videoId = chooseVideoId(manifest, type, ids)
-  if (!videoId) throw new Error('No Compatible IMDb/TMDB ID Available For This Addon.')
-  if (!addonSupportsStreams(manifest, type, videoId)) {
-    throw new Error('Addon Does Not Advertise Stream Resources For This Title Type.')
-  }
-
-  try {
-    const data = await fetchStreamResponse(buildStreamUrl(addon.manifestUrl, type, videoId), timeoutMs)
-    const result = normalizeAddonStreamResult(data, addon, manifest, videoId)
-    if (!result.streams.length && lastError) throw lastError
-    streamCache.set(`${keyBase}${videoId}`, { result, expiresAt: Date.now() + 20_000 })
-    return result
-  } catch (error) {
-    throw error
-  }
-}
-
-function qualityScore(stream) {
-  const text = `${stream.title || ''} ${stream.name || ''} ${stream.quality || ''}`.toLowerCase()
-  if (/(2160p|4k|uhd)/i.test(text)) return 300
-  if (/1440p/i.test(text)) return 260
-  if (/(1080p|full hd|fhd)/i.test(text)) return 420
-  if (/(720p|hd)/i.test(text)) return 340
-  if (/576p/i.test(text)) return 120
-  if (/480p|sd/i.test(text)) return 100
-  return 70
+function normalizeQuality(text = '') {
+  const value = String(text).toLowerCase()
+  if (/2160p|\b4k\b|uhd/.test(value)) return 2160
+  if (/1440p/.test(value)) return 1440
+  if (/1080p|full\s*hd/.test(value)) return 1080
+  if (/720p/.test(value)) return 720
+  if (/576p/.test(value)) return 576
+  if (/480p|sd/.test(value)) return 480
+  return 0
 }
 
 function detectKind(stream) {
-  const url = typeof stream?.url === 'string' ? stream.url.trim() : ''
-  if (url) {
-    if (/\.m3u8(?:$|[?#])/i.test(url)) return 'hls'
-    if (/\.(?:mkv|avi|flv)(?:$|[?#])/i.test(url)) return 'unsupported-video'
-    if (/^https?:\/\//i.test(url)) return 'http'
-  }
-  if (stream?.ytId) return 'youtube'
+  const url = String(stream?.url || '').trim()
+  if (/\.m3u8(?:$|[?#])/i.test(url)) return 'hls'
+  if (url) return 'http'
   if (stream?.externalUrl) return 'external'
-  if (stream?.infoHash || stream?.fileIdx != null || stream?.magnet) return 'torrent'
+  if (stream?.infoHash || stream?.magnet) return 'torrent'
   return 'unknown'
 }
 
-export function normalizeStream(stream, addon, manifest = {}, index = 0) {
-  const url = typeof stream?.url === 'string' ? stream.url.trim() : ''
-  const behaviorHints = stream?.behaviorHints || {}
+export function normalizeStream(stream, addon, index = 0) {
+  const url = String(stream?.url || '').trim()
   const kind = detectKind(stream)
-  const requiresHeaders = Boolean(behaviorHints?.proxyHeaders || behaviorHints?.requestHeaders)
-  const explicitlyNotWebReady = Boolean(behaviorHints?.notWebReady)
-
+  const title = String(stream?.title || stream?.name || 'Stream').trim()
+  const behaviorHints = stream?.behaviorHints || {}
   return {
-    id: `${addon.id}-${index}-${Math.random().toString(36).slice(2, 8)}`,
+    id: `${addon.id}-${index}-${encodeURIComponent(url || title)}`,
     addonId: addon.id,
-    addonName: manifest.name || addon.name,
+    addonName: addon.name,
     addonPriority: Number(addon.priority) || 0,
-    title: stream?.title || stream?.name || 'Stream',
-    name: stream?.name || manifest.name || addon.name,
+    title,
     url,
-    externalUrl: typeof stream?.externalUrl === 'string' ? stream.externalUrl : '',
-    infoHash: typeof stream?.infoHash === 'string' ? stream.infoHash : '',
-    fileIdx: stream?.fileIdx,
-    ytId: typeof stream?.ytId === 'string' ? stream.ytId : '',
-    behaviorHints,
-    subtitles: Array.isArray(stream?.subtitles) ? stream.subtitles : [],
     kind,
-    requiresHeaders,
-    explicitlyNotWebReady,
-    qualityScore: qualityScore(stream),
-    browserCandidate: Boolean(
-      url
-      && /^https?:\/\//i.test(url)
-      && kind !== 'unsupported-video'
-    ),
+    quality: normalizeQuality(`${title} ${stream?.quality || ''}`),
+    subtitles: Array.isArray(stream?.subtitles) ? stream.subtitles : [],
+    externalUrl: String(stream?.externalUrl || ''),
+    infoHash: String(stream?.infoHash || ''),
+    fileIdx: stream?.fileIdx,
+    behaviorHints,
+    notWebReady: Boolean(behaviorHints.notWebReady),
+    browserCandidate: /^https?:\/\//i.test(url) && (kind === 'http' || kind === 'hls'),
   }
 }
 
-export function rankBrowserStreams(streams) {
-  const seen = new Set()
-  return [...streams]
-    .filter((stream) => stream.browserCandidate && stream.url)
-    .filter((stream) => {
-      const key = stream.url.trim()
-      if (!key || seen.has(key)) return false
-      seen.add(key)
-      return true
-    })
-    .sort((a, b) => {
-      // Provider preference comes first. PenguPlay is intentionally the
-      // preferred source, followed by the other direct-stream providers.
-      const provider = (b.addonPriority || 0) - (a.addonPriority || 0)
-      if (provider) return provider
-      const quality = b.qualityScore - a.qualityScore
-      if (quality) return quality
-      const hls = Number(b.kind === 'hls') - Number(a.kind === 'hls')
-      if (hls) return hls
-      const headers = Number(a.requiresHeaders) - Number(b.requiresHeaders)
-      if (headers) return headers
-      return a.addonName.localeCompare(b.addonName)
-    })
+function rankStreams(streams) {
+  return [...streams].sort((a, b) => {
+    const provider = (b.addonPriority || 0) - (a.addonPriority || 0)
+    if (provider) return provider
+    const quality = (b.quality || 0) - (a.quality || 0)
+    if (quality) return quality
+    const hls = Number(b.kind === 'hls') - Number(a.kind === 'hls')
+    if (hls) return hls
+    return a.addonName.localeCompare(b.addonName)
+  })
 }
 
-function isTransientAddonError(error) {
-  const message = String(error?.message || error || '')
-  return /timed out|request failed \((?:408|429|5\d\d)\)|network|cors/i.test(message)
-}
+export async function fetchAddonStreams(addon, type, ids, timeoutMs = 7000) {
+  const candidates = [...new Set([ids.imdbId, ids.tmdbId != null ? `tmdb:${ids.tmdbId}` : ''].filter(Boolean))]
+  let lastError = null
 
-function wait(ms) {
-  return new Promise((resolve) => window.setTimeout(resolve, ms))
-}
-
-async function fetchAddonWithRetry(addon, type, ids) {
-  try {
-    return await fetchAddonStreams(addon, type, ids)
-  } catch (error) {
-    if (!isTransientAddonError(error)) throw error
-    await wait(450)
-    return fetchAddonStreams(addon, type, ids)
-  }
-}
-
-export async function findPlayableStreamsProgressive({ addons, type, ids, onAddonResult }) {
-  const enabled = addons
-    .filter((addon) => addon.enabled && addon.manifestUrl && addon.kind === 'stream')
-    .sort((a, b) => (Number(b.priority) || 0) - (Number(a.priority) || 0))
-
-  const streams = []
-  const errors = []
-
-  await Promise.allSettled(enabled.map(async (addon) => {
+  for (const candidate of candidates) {
     try {
-      const result = await fetchAddonWithRetry(addon, type, ids)
-      streams.push(...result.streams)
-      onAddonResult?.({ addon, result: result.streams, all: [...streams], errors: [...errors] })
+      const url = buildResourceUrl(addon.manifestUrl, 'stream', type, candidate)
+      const data = await fetchJson(url, timeoutMs)
+      const streams = (Array.isArray(data?.streams) ? data.streams : [])
+        .map((stream, index) => normalizeStream(stream, addon, index))
+      if (streams.length) return streams
     } catch (error) {
-      const entry = { addon: addon.name, error: error?.message || 'Unknown Addon Error.' }
-      errors.push(entry)
-      onAddonResult?.({ addon, result: [], all: [...streams], errors: [...errors] })
+      lastError = error
+    }
+  }
+
+  if (lastError) throw lastError
+  return []
+}
+
+export async function findPlayableStreamsProgressive({ addons, type, ids, onUpdate }) {
+  const enabled = (addons || [])
+    .filter((addon) => addon.enabled && addon.manifestUrl && addon.kind === 'stream')
+    .sort((a, b) => Number(b.priority) - Number(a.priority))
+
+  const all = []
+  const errors = []
+  let completed = 0
+
+  if (!enabled.length) {
+    onUpdate?.({ all: [], playable: [], errors: [], completed: 0, total: 0, complete: true })
+    return { all: [], playable: [], errors: [], completed: 0, total: 0, complete: true }
+  }
+
+  await Promise.all(enabled.map(async (addon) => {
+    try {
+      const streams = await fetchAddonStreams(addon, type, ids)
+      all.push(...streams)
+    } catch (error) {
+      errors.push({ addon: addon.name, error: error?.message || 'Addon Unavailable.' })
+    } finally {
+      completed += 1
+      const deduped = [...new Map(all.filter((stream) => stream.url).map((stream) => [stream.url, stream])).values()]
+      const playable = rankStreams(deduped.filter((stream) => stream.browserCandidate))
+      onUpdate?.({
+        all: deduped,
+        playable,
+        errors: [...errors],
+        completed,
+        total: enabled.length,
+        complete: completed === enabled.length,
+      })
     }
   }))
 
-  const all = [...streams]
-  return {
-    all,
-    playable: rankBrowserStreams(all),
-    errors,
-  }
+  const deduped = [...new Map(all.filter((stream) => stream.url).map((stream) => [stream.url, stream])).values()]
+  const playable = rankStreams(deduped.filter((stream) => stream.browserCandidate))
+  return { all: deduped, playable, errors, completed, total: enabled.length, complete: true }
 }
 
-export async function findPlayableStreams({ addons, type, ids }) {
-  return findPlayableStreamsProgressive({ addons, type, ids })
+export async function getAddonManifest(manifestUrl) {
+  return fetchJson(manifestUrl, 5000)
+}
+
+export function getAddonConfigDefaults() {
+  return DEFAULT_ADDONS.map((addon) => ({ ...addon }))
+}
+
+export function getManifestResourceUrl(manifestUrl, resource, type, videoId) {
+  return buildResourceUrl(manifestUrl, resource, type, videoId)
 }

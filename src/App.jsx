@@ -12,6 +12,7 @@ import Discover from './pages/Discover'
 import Watchlists from './pages/Watchlists'
 import Watchlist from './pages/Watchlist'
 import Detail from './pages/Detail'
+import StreamPage from './pages/StreamPage'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import ResetPassword from './pages/ResetPassword'
@@ -139,6 +140,10 @@ function AppContent() {
               notify={notify}
             />,
           )}
+        />
+        <Route
+          path="/watchlists/:watchlistId/items/:itemId/stream"
+          element={<RequireAuth><StreamPage notify={notify} /></RequireAuth>}
         />
         <Route
           path="/watchlists/:watchlistId/items/:itemId"

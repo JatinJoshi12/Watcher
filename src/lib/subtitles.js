@@ -1,43 +1,37 @@
-import { buildSubtitlesUrl, fetchAddonManifest, getStreamAddons } from './streamAddons'
+import { getManifestResourceUrl, getStreamAddons } from './streamAddons'
 
-export async function fetchSubtitles({ addon, type, videoId }) {
-  const manifest = await fetchAddonManifest(addon.manifestUrl, 9000)
-  const resources = Array.isArray(manifest.resources) ? manifest.resources : []
-  const supports = resources.some((resource) => {
-    if (typeof resource === 'string') return resource === 'subtitles'
-    const types = Array.isArray(resource?.types) ? resource.types : manifest.types
-    return resource?.name === 'subtitles' && (!types?.length || types.includes(type))
-  })
-  if (!supports) throw new Error('Addon Does Not Advertise Subtitles For This Type.')
+const SUBTITLE_MANIFEST = 'https://opensubtitlesv3-pro.dexter21767.com/eyJsYW5ncyI6WyJlbmdsaXNoIl0sInNvdXJjZSI6ImFsbCIsImFpVHJhbnNsYXRlZCI6dHJ1ZSwiYXV0b0FkanVzdG1lbnQiOmZhbHNlfQ==/manifest.json'
 
-  const url = buildSubtitlesUrl(addon.manifestUrl, type, videoId)
-  const response = await fetch(url, { headers: { Accept: 'application/json' } })
-  if (!response.ok) throw new Error(`Subtitle Request Failed (${response.status})`)
-  const data = await response.json()
-  return Array.isArray(data?.subtitles) ? data.subtitles : []
-}
-
-export async function findSubtitles({ type, videoId }) {
-  const addon = getStreamAddons().find((entry) => entry.id === 'opensubtitles-pro' && entry.enabled && entry.manifestUrl)
-  if (!addon) return { tracks: [], error: 'OpenSubtitles Is Not Configured.' }
-
+async function fetchJson(url, timeoutMs = 7000) {
+  const controller = new AbortController()
+  const timer = window.setTimeout(() => controller.abort(), timeoutMs)
   try {
-    const subtitles = await fetchSubtitles({ addon, type, videoId })
-    const tracks = subtitles
-      .map((subtitle, index) => ({
-        id: subtitle.id || `${addon.id}-${index}`,
-        url: subtitle.url || subtitle.file || '',
-        lang: subtitle.lang || subtitle.language || 'en',
-        label: subtitle.label || subtitle.lang || subtitle.language || 'English',
-        format: String(subtitle.format || '').toLowerCase(),
-      }))
-      .filter((track) => track.url)
-    return { tracks, error: '' }
-  } catch (error) {
-    return { tracks: [], error: error.message || 'Unable To Load Subtitles.' }
+    const response = await fetch(url, { signal: controller.signal, headers: { Accept: 'application/json' } })
+    if (!response.ok) throw new Error(`Subtitle Request Failed (${response.status}).`)
+    return response.json()
+  } finally {
+    window.clearTimeout(timer)
   }
 }
 
-export function normalizeSubtitleUrl(track) {
-  return String(track?.url || '')
+export async function findSubtitles({ type, videoId }) {
+  if (!videoId) return { tracks: [], error: null }
+  try {
+    const url = getManifestResourceUrl(SUBTITLE_MANIFEST, 'subtitles', type, videoId)
+    const data = await fetchJson(url)
+    const tracks = (Array.isArray(data?.subtitles) ? data.subtitles : [])
+      .filter((entry) => entry?.url)
+      .map((entry, index) => ({
+        id: entry.id || `${index}-${entry.url}`,
+        url: entry.url,
+        lang: entry.lang || entry.language || 'en',
+        label: entry.label || entry.lang || entry.language || 'English',
+        format: String(entry.format || '').toLowerCase(),
+      }))
+    return { tracks, error: null }
+  } catch (error) {
+    return { tracks: [], error: error?.message || 'Subtitles Unavailable.' }
+  }
 }
+
+export { SUBTITLE_MANIFEST }

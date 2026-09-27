@@ -1,28 +1,35 @@
-import { buildStreamUrl, fetchAddonManifest, getStreamAddons } from './streamAddons'
+const WATCH_NEXT_MANIFEST = 'https://099757617587-watch-next.baby-beamup.club/manifest.json'
 
-function titleFromStream(stream) {
-  const raw = String(stream?.title || stream?.name || '').split('\n')[0].trim()
-  return raw || ''
+async function fetchJson(url, timeoutMs = 6000) {
+  const controller = new AbortController()
+  const timer = window.setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    const response = await fetch(url, { signal: controller.signal, headers: { Accept: 'application/json' } })
+    if (!response.ok) throw new Error(`Watch Next Request Failed (${response.status}).`)
+    return response.json()
+  } finally {
+    window.clearTimeout(timer)
+  }
 }
 
 export async function fetchWatchNext({ type, videoId }) {
-  const addon = getStreamAddons().find((entry) => entry.id === 'watch-next' && entry.enabled && entry.manifestUrl)
-  if (!addon) return []
-
-  const manifest = await fetchAddonManifest(addon.manifestUrl, 8000)
-  const url = buildStreamUrl(addon.manifestUrl, type, videoId)
-  const response = await fetch(url, { headers: { Accept: 'application/json' } })
-  if (!response.ok) return []
-  const data = await response.json()
-  const streams = Array.isArray(data?.streams) ? data.streams : []
-
-  return streams
-    .map((stream, index) => ({
-      id: `${index}-${stream?.externalUrl || stream?.ytId || stream?.title || ''}`,
-      title: titleFromStream(stream),
-      url: stream?.externalUrl || (stream?.ytId ? `https://www.youtube.com/watch?v=${stream.ytId}` : ''),
-      addonName: manifest.name || addon.name,
+  if (!videoId) return []
+  try {
+    const manifest = await fetchJson(WATCH_NEXT_MANIFEST)
+    const catalogs = Array.isArray(manifest?.catalogs) ? manifest.catalogs : []
+    const catalog = catalogs.find((entry) => entry.type === type) || catalogs[0]
+    if (!catalog?.id) return []
+    const base = WATCH_NEXT_MANIFEST.replace(/\/manifest\.json(?:[?#].*)?$/i, '')
+    const data = await fetchJson(`${base}/catalog/${catalog.type}/${catalog.id}.json`)
+    return (Array.isArray(data?.metas) ? data.metas : []).slice(0, 12).map((entry) => ({
+      id: entry.id,
+      title: entry.name || entry.title || 'Recommended Title',
+      poster: entry.poster || '',
+      url: '',
     }))
-    .filter((entry) => entry.title && entry.url)
-    .slice(0, 8)
+  } catch {
+    return []
+  }
 }
+
+export { WATCH_NEXT_MANIFEST }
