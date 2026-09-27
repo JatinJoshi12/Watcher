@@ -2,7 +2,7 @@ import Poster from './Poster'
 import { Icon } from './Icon'
 import { formatGenre, labelType, titleCaseText } from '../lib/utils'
 
-export default function WatchlistCard({ item, onDelete, onToggleStatus, onOpenDetails, busyId }) {
+export default function WatchlistCard({ item, onDelete, onToggleStatus, onOpenDetails, onStream, busyId }) {
   const busy = busyId === item.id
   const statusLabel = item.status === 'watched' ? 'Watched' : 'Unwatched'
   const genreText = formatGenre(item.genre)
@@ -29,6 +29,11 @@ export default function WatchlistCard({ item, onDelete, onToggleStatus, onOpenDe
             <Icon name="check" size={14} />
             {item.status === 'watched' ? 'Mark Unwatched' : 'Mark Watched'}
           </button>
+          {onStream ? (
+            <button className="watcher-square-action watcher-stream-card-action" onClick={() => onStream(item)} aria-label={`Stream ${item.title}`} title={`Stream ${item.title}`} disabled={busy}>
+              <Icon name="play" size={16} />
+            </button>
+          ) : null}
           <button className="watcher-square-action watcher-view-action" onClick={() => onOpenDetails(item)} aria-label={`View ${item.title}`} disabled={busy}>
             <Icon name="eye" size={16} />
           </button>

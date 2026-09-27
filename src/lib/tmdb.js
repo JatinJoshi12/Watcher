@@ -311,6 +311,24 @@ export async function getRecentTrailers() {
     .slice(0, 30)
 }
 
+export async function getExternalIds(id, type = 'movie') {
+  const endpoint = type === 'series' ? `/tv/${id}/external_ids` : `/movie/${id}/external_ids`
+  const data = await request(endpoint)
+  return {
+    imdb_id: data.imdb_id || null,
+    tvdb_id: data.tvdb_id || null,
+    wikidata_id: data.wikidata_id || null,
+  }
+}
+
+export async function getSeasonDetails(id, seasonNumber) {
+  const data = await request(`/tv/${id}/season/${seasonNumber}`)
+  return {
+    season_number: Number(data.season_number) || Number(seasonNumber) || 1,
+    episodes: Array.isArray(data.episodes) ? data.episodes : [],
+  }
+}
+
 export async function getTitleDetails(id, type = 'movie') {
   const endpoint = type === 'series' ? `/tv/${id}` : `/movie/${id}`
   const data = await request(endpoint)

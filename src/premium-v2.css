@@ -1474,7 +1474,7 @@ a {
 .watcher-saved-actions {
   margin-top: 10px;
   display: grid;
-  grid-template-columns: minmax(0,1fr) 36px 36px;
+  grid-template-columns: minmax(0,1fr) repeat(3, 36px);
   gap: 6px;
 }
 
@@ -7897,3 +7897,225 @@ html:has(.auth-page.signup-auth-page) {
     flex-basis: 28px !important;
   }
 }
+
+/* STREAMING INTEGRATION */
+.watcher-stream-panel {
+  margin-top: 26px;
+  padding: 20px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 18px;
+  background: rgba(5,6,8,.58);
+  box-shadow: 0 18px 48px rgba(0,0,0,.24);
+}
+
+.watcher-stream-panel-header,
+.watcher-addon-settings-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.watcher-stream-panel-header h2,
+.watcher-addon-settings-heading h2 {
+  margin: 6px 0 5px;
+  font-size: 30px;
+  font-weight: 950;
+  letter-spacing: -.04em;
+}
+
+.watcher-stream-panel-header p,
+.watcher-addon-settings-heading p {
+  max-width: 680px;
+  margin: 0;
+  color: #9aa0a8;
+  font-size: 11px;
+  line-height: 1.65;
+  font-weight: 700;
+}
+
+.watcher-stream-source-count {
+  min-width: 80px;
+  padding: 10px 12px;
+  border: 1px solid rgba(244,200,78,.18);
+  border-radius: 12px;
+  background: rgba(244,200,78,.05);
+  text-align: center;
+}
+
+.watcher-stream-source-count strong { display: block; font-size: 22px; font-weight: 950; color: #ffe277; }
+.watcher-stream-source-count span { display: block; margin-top: 2px; color: #9e9882; font-size: 8px; font-weight: 900; text-transform: uppercase; letter-spacing: .1em; }
+
+.watcher-stream-main-action {
+  margin-top: 18px;
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
+.watcher-stream-play-button {
+  min-height: 56px;
+  min-width: min(100%, 290px);
+  padding: 0 15px;
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  border: 1px solid rgba(244,200,78,.42);
+  border-radius: 13px;
+  background: linear-gradient(135deg, #f8d75d, #dcae2c);
+  color: #161208;
+  box-shadow: 0 16px 38px rgba(244,200,78,.16), inset 0 1px 0 rgba(255,255,255,.48);
+  cursor: pointer;
+}
+
+.watcher-stream-play-button:hover { transform: translateY(-2px); box-shadow: 0 22px 46px rgba(244,200,78,.23), inset 0 1px 0 rgba(255,255,255,.52); }
+.watcher-stream-play-button:disabled { cursor: wait; opacity: .66; transform: none; }
+
+.watcher-stream-play-icon {
+  width: 35px;
+  height: 35px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(0,0,0,.12);
+}
+
+.watcher-stream-play-button span:last-child { display: flex; flex-direction: column; align-items: flex-start; }
+.watcher-stream-play-button strong { font-size: 13px; font-weight: 950; }
+.watcher-stream-play-button small { margin-top: 3px; font-size: 9px; font-weight: 850; opacity: .7; }
+
+.watcher-stream-status,
+.watcher-stream-ready,
+.watcher-stream-warning {
+  margin-top: 13px;
+  padding: 10px 12px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.watcher-stream-status { color: #b7bdc6; background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.07); }
+.watcher-stream-ready { color: #b7e9c9; background: rgba(83,178,116,.07); border: 1px solid rgba(83,178,116,.16); flex-wrap: wrap; }
+.watcher-stream-ready span + span { margin-left: 3px; }
+.watcher-stream-warning { align-items: flex-start; color: #e1b7b7; background: rgba(166,60,67,.08); border: 1px solid rgba(166,60,67,.18); }
+.watcher-stream-warning strong { display: block; color: #f2d0d0; }
+.watcher-stream-warning span { display: block; margin-top: 4px; color: #ba999c; font-size: 9px; line-height: 1.55; }
+
+.watcher-episode-controls {
+  margin-top: 18px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 14px;
+  background: rgba(255,255,255,.025);
+}
+
+.watcher-episode-controls h3 { margin: 5px 0 0; font-size: 17px; font-weight: 950; }
+.watcher-episode-selects { display: flex; gap: 9px; }
+.watcher-episode-selects label { display: grid; gap: 5px; min-width: 130px; }
+.watcher-episode-selects label span { color: #808791; font-size: 8px; font-weight: 900; text-transform: uppercase; letter-spacing: .1em; }
+.watcher-episode-selects select { min-height: 39px; padding: 0 10px; border: 1px solid rgba(255,255,255,.1); border-radius: 9px; background: rgba(7,8,11,.8); color: #eff0ec; outline: none; font-size: 10px; font-weight: 900; }
+.watcher-episode-selects select:focus { border-color: rgba(244,200,78,.35); }
+
+.watcher-source-details { margin-top: 15px; border-top: 1px solid rgba(255,255,255,.08); padding-top: 13px; }
+.watcher-source-details summary { cursor: pointer; color: #b0b4bb; font-size: 9px; font-weight: 900; }
+.watcher-source-list { margin-top: 10px; display: grid; gap: 7px; }
+.watcher-source-item { min-height: 48px; padding: 8px 10px; display: grid; grid-template-columns: 55px minmax(0,1fr) 24px; align-items: center; gap: 9px; border: 1px solid rgba(255,255,255,.08); border-radius: 10px; background: rgba(255,255,255,.025); color: #e9e9e5; text-align: left; cursor: pointer; }
+.watcher-source-item:hover { border-color: rgba(244,200,78,.2); background: rgba(244,200,78,.045); }
+.watcher-source-quality { color: #f5d869; font-size: 9px; font-weight: 950; text-transform: uppercase; }
+.watcher-source-copy { min-width: 0; }
+.watcher-source-copy strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; font-weight: 900; }
+.watcher-source-copy small { display: block; margin-top: 2px; color: #818791; font-size: 8px; font-weight: 800; }
+.watcher-stream-addon-footnote { margin-top: 12px; color: #696f78; font-size: 8px; line-height: 1.55; }
+
+.watcher-stream-player-panel { margin-top: 18px; padding: 14px; border: 1px solid rgba(255,255,255,.1); border-radius: 16px; background: rgba(0,0,0,.38); }
+.watcher-stream-player-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.watcher-stream-player-head h2 { margin: 6px 0 6px; font-size: 18px; font-weight: 950; }
+.watcher-stream-player-source { display: flex; gap: 6px; flex-wrap: wrap; }
+.watcher-stream-player-source span { padding: 4px 7px; border-radius: 999px; background: rgba(255,255,255,.06); color: #a8afb8; font-size: 7px; font-weight: 900; text-transform: uppercase; }
+.watcher-video-shell { position: relative; margin-top: 12px; overflow: hidden; border-radius: 12px; background: #000; min-height: 220px; }
+.watcher-video { display: block; width: 100%; max-height: min(72vh, 760px); background: #000; }
+.watcher-player-overlay, .watcher-player-error { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 9px; padding: 30px; text-align: center; background: rgba(0,0,0,.78); }
+.watcher-player-overlay strong, .watcher-player-error strong { font-size: 12px; font-weight: 900; }
+.watcher-player-error span { max-width: 360px; color: #9b9fa8; font-size: 9px; line-height: 1.55; }
+.watcher-player-loader { width: 22px; height: 22px; border: 2px solid rgba(255,255,255,.16); border-top-color: #f4c84e; border-radius: 50%; animation: watcher-spin .75s linear infinite; }
+.watcher-player-loader.small { width: 13px; height: 13px; }
+@keyframes watcher-spin { to { transform: rotate(360deg); } }
+
+.watcher-addon-settings-section { margin-top: 24px; padding: 22px; border: 1px solid rgba(255,255,255,.11); border-radius: 18px; background: rgba(7,8,11,.64); }
+.watcher-addon-settings-heading > strong { color: #f2d76f; font-size: 10px; font-weight: 950; text-transform: uppercase; letter-spacing: .1em; }
+.watcher-addon-list { margin-top: 18px; display: grid; gap: 9px; }
+.watcher-addon-row { padding: 13px; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 14px; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; background: rgba(255,255,255,.022); }
+.watcher-addon-main { min-width: 0; }
+.watcher-addon-title-line { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.watcher-addon-title-line strong { font-size: 12px; font-weight: 950; }
+.watcher-addon-title-line span { color: #777e88; font-size: 7px; font-weight: 900; letter-spacing: .1em; }
+.watcher-addon-title-line em { font-style: normal; font-size: 7px; font-weight: 950; letter-spacing: .1em; }
+.watcher-addon-ok { color: #9fe2b8; }
+.watcher-addon-bad { color: #e39c9f; }
+.watcher-addon-url { width: 100%; margin-top: 8px; min-height: 37px; padding: 0 10px; border: 1px solid rgba(255,255,255,.08); border-radius: 8px; background: rgba(0,0,0,.22); color: #cdd1d5; outline: none; font-size: 9px; font-weight: 650; }
+.watcher-addon-url:focus { border-color: rgba(244,200,78,.28); }
+.watcher-addon-main small { display: block; margin-top: 6px; color: #6f757e; font-size: 8px; line-height: 1.5; }
+.watcher-addon-row-actions { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; justify-content: flex-end; }
+.watcher-addon-toggle { display: inline-flex; align-items: center; gap: 5px; color: #9298a1; font-size: 8px; font-weight: 850; }
+.watcher-addon-toggle input { accent-color: #f3c94f; }
+.watcher-addon-row-actions .watcher-secondary-button { min-height: 34px; padding: 0 10px; font-size: 8px; }
+.watcher-addon-custom-add { margin-top: 14px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,.07); }
+.watcher-addon-custom-add h3 { margin: 5px 0 0; font-size: 14px; font-weight: 950; }
+.watcher-addon-custom-form { margin-top: 9px; display: flex; gap: 8px; }
+.watcher-addon-custom-form input { flex: 1; min-width: 0; min-height: 41px; padding: 0 11px; border: 1px solid rgba(255,255,255,.09); border-radius: 9px; background: rgba(0,0,0,.2); color: #e6e8e4; outline: none; font-size: 9px; }
+.watcher-addon-custom-form button { min-height: 41px; padding: 0 13px; }
+.watcher-addon-security-note { margin-top: 11px; color: #686e76; font-size: 8px; line-height: 1.55; }
+.watcher-stream-card-action { color: #f3cf5a; border-color: rgba(244,200,78,.2); background: rgba(244,200,78,.06); }
+.watcher-stream-card-action:hover { color: #fff2b8; background: rgba(244,200,78,.12); border-color: rgba(244,200,78,.34); }
+
+@media (max-width: 900px) {
+  .watcher-episode-controls { flex-direction: column; align-items: stretch; }
+  .watcher-episode-selects label { flex: 1; }
+  .watcher-episode-selects { width: 100%; }
+  .watcher-addon-row { grid-template-columns: 1fr; }
+  .watcher-addon-row-actions { justify-content: flex-start; }
+}
+
+@media (max-width: 620px) {
+  .watcher-stream-panel { padding: 15px; }
+  .watcher-stream-panel-header { align-items: stretch; }
+  .watcher-stream-source-count { min-width: 68px; }
+  .watcher-stream-play-button { width: 100%; min-width: 0; }
+  .watcher-episode-selects { gap: 7px; }
+  .watcher-episode-selects label { min-width: 0; }
+  .watcher-addon-custom-form { flex-direction: column; }
+}
+
+
+/* ONE-CLICK STREAMING - TYPOGRAPHY / ACTION POLISH */
+.watcher-stream-panel-header h2,
+.watcher-addon-settings-heading h2 { font-size: clamp(30px, 3vw, 38px); font-weight: 950; }
+.watcher-stream-panel-header p,
+.watcher-addon-settings-heading p { font-size: 13px; font-weight: 750; }
+.watcher-stream-play-button strong { font-size: 15px; font-weight: 950; }
+.watcher-stream-play-button small { font-size: 10px; font-weight: 850; }
+.watcher-stream-ready,
+.watcher-stream-warning,
+.watcher-stream-status { font-size: 11px; font-weight: 800; }
+.watcher-episode-controls h3 { font-size: 19px; }
+.watcher-episode-selects label span { font-size: 9px; }
+.watcher-episode-selects select { font-size: 11px; font-weight: 900; }
+.watcher-source-details summary { font-size: 10px; }
+.watcher-source-copy strong { font-size: 12px; font-weight: 950; }
+.watcher-source-copy small { font-size: 9px; }
+.watcher-addon-title-line strong { font-size: 14px; }
+.watcher-addon-title-line span,
+.watcher-addon-title-line em { font-size: 8px; }
+.watcher-addon-url { font-size: 10px; font-weight: 700; }
+.watcher-addon-main small { font-size: 9px; }
+.watcher-addon-toggle { font-size: 9px; }
+.watcher-addon-row-actions .watcher-secondary-button { font-size: 9px; }
+.watcher-preview-stream-button { box-shadow: 0 14px 34px rgba(244,200,78,.15); }

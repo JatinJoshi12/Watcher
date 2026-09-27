@@ -1,17 +1,20 @@
 import { useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useLibrary } from '../context'
 import Poster from '../components/Poster'
 import ConfirmDialog from '../components/ConfirmDialog'
+import StreamSourcePanel from '../components/StreamSourcePanel'
 import { Icon } from '../components/Icon'
 import { titleCaseText } from '../lib/utils'
 
 export default function Detail({ notify }) {
   const { watchlistId, itemId } = useParams()
   const navigate = useNavigate()
-  const { watchlists, items, deleteItem } = useLibrary()
+  const location = useLocation()
+  const { watchlists, items, deleteItem, updateItem } = useLibrary()
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [busy, setBusy] = useState(false)
+  const autoPlay = Boolean(location.state?.watcherAutoPlay)
 
   const list = useMemo(() => watchlists.find((entry) => entry.id === watchlistId), [watchlists, watchlistId])
   const item = useMemo(() => items.find((entry) => entry.id === itemId), [items, itemId])
@@ -70,6 +73,8 @@ export default function Detail({ notify }) {
               <span className="watcher-kicker">STORY</span>
               <p>{titleCaseText(item.description || 'No Description Added.')}</p>
             </section>
+
+            <StreamSourcePanel item={item} updateItem={updateItem} notify={notify} autoPlay={autoPlay} />
 
             <div className="watcher-detail-actions">
               <button className="watcher-danger-button" onClick={() => setDeleteOpen(true)} disabled={busy}>
