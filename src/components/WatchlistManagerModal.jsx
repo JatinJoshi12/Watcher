@@ -55,7 +55,7 @@ export default function WatchlistManagerModal({ initialEditing, onCreate, onUpda
             id="watchlist-description"
             value={description}
             onChange={(event) => setDescription(event.target.value)}
-            placeholder="A short description for this collection..."
+            placeholder="A Short Description for This Collection..."
             rows={3}
             maxLength={180}
           />

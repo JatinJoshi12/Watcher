@@ -177,7 +177,7 @@ export default function Login() {
                 className="button button-secondary button-wide"
                 onClick={() => setResetMode(false)}
               >
-                Back To Sign In
+                Back to Sign In
               </button>
             ) : null}
           </form>

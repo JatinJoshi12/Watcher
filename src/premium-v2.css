@@ -7898,133 +7898,153 @@ html:has(.auth-page.signup-auth-page) {
   }
 }
 
-/* Final one-click streaming surface. */
-.watcher-stream-card-action {
-  min-height: 34px;
-  padding: 0 11px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  border: 1px solid rgba(255,255,255,.16);
-  border-radius: 10px;
-  background: rgba(255,255,255,.07);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: .02em;
-  cursor: pointer;
+/* =========================================================
+   FINAL REQUESTED POLISH - AUTH, SIGNUP PROFILE + FEATURES
+   ========================================================= */
+.auth-page:not(.signup-auth-page) .auth-panel {
+  width: min(100%, 520px);
 }
-.watcher-stream-card-action:hover { background: rgba(255,255,255,.12); }
 
-.watcher-stream-page {
-  min-height: 100vh;
-  background: #050608;
-  color: #fff;
-  padding: 18px 22px 28px;
-}
-.watcher-stream-topbar {
-  max-width: 1440px;
-  margin: 0 auto 16px;
-  min-height: 60px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-.watcher-stream-back {
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 12px;
-  background: rgba(255,255,255,.05);
-  color: #fff;
-  cursor: pointer;
-}
-.watcher-stream-heading { flex: 1; min-width: 0; }
-.watcher-stream-heading h1 {
-  margin: 4px 0 0;
-  font-size: clamp(24px, 3.2vw, 42px);
-  line-height: 1;
-  letter-spacing: -.04em;
+.auth-page:not(.signup-auth-page) .auth-panel h1 {
+  font-size: clamp(32px, 5vw, 42px);
   font-weight: 950;
 }
-.watcher-stream-episode-controls {
-  display: flex;
-  gap: 10px;
-  align-items: end;
-}
-.watcher-stream-episode-controls label { display: grid; gap: 5px; }
-.watcher-stream-episode-controls label span {
-  font-size: 10px;
+
+.auth-page:not(.signup-auth-page) .auth-copy,
+.auth-page:not(.signup-auth-page) .field label,
+.auth-page:not(.signup-auth-page) .text-button,
+.auth-page:not(.signup-auth-page) .button,
+.auth-page:not(.signup-auth-page) .notice {
   font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: .08em;
-  color: #9298a1;
 }
-.watcher-stream-episode-controls select {
-  min-height: 42px;
-  min-width: 132px;
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 10px;
-  background: rgba(255,255,255,.06);
-  color: #fff;
-  padding: 0 12px;
-  font-weight: 850;
+
+.auth-page:not(.signup-auth-page) .auth-copy {
+  font-size: 11px;
 }
-.watcher-one-click-player {
-  max-width: 1440px;
-  margin: 0 auto;
+
+.signup-panel .auth-copy {
+  display: none !important;
 }
-.watcher-one-click-video-shell {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  min-height: 320px;
-  overflow: hidden;
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 18px;
-  background: #000;
-  box-shadow: 0 32px 100px rgba(0,0,0,.45);
+
+.signup-panel .signup-profile-picker {
+  min-height: 78px;
+  grid-template-columns: 1fr !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 10px !important;
+  border-color: rgba(244,200,78,.16) !important;
+  background: linear-gradient(180deg, rgba(244,200,78,.045), rgba(255,255,255,.018)) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 10px 25px rgba(0,0,0,.16) !important;
 }
-.watcher-one-click-video {
+
+.signup-panel .signup-single-avatar {
+  width: 54px;
+  height: 54px;
+  padding: 3px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ffe478, #dcae26);
+  box-shadow: 0 0 0 2px rgba(244,200,78,.10), 0 0 24px rgba(244,200,78,.18), 0 9px 24px rgba(0,0,0,.35);
+}
+
+.signup-panel .signup-single-avatar img {
   width: 100%;
   height: 100%;
   display: block;
-  background: #000;
-  object-fit: contain;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 1px solid rgba(0,0,0,.55);
 }
-.watcher-one-click-overlay {
-  position: absolute;
-  inset: 0;
+
+.watcher-stats-stack {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+  margin-top: 8px !important;
+}
+
+.watcher-stats-stack-row {
+  min-height: 150px !important;
+  padding: 22px !important;
+  display: flex !important;
+  align-items: flex-end !important;
+  gap: 16px !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  border-radius: 18px !important;
+  background:
+    linear-gradient(145deg, rgba(10,11,15,.86), rgba(5,6,8,.68)),
+    url('/settings-background.png') center / cover no-repeat !important;
+  box-shadow: 0 20px 42px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.04), 0 0 28px rgba(244,200,78,.045) !important;
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease !important;
+}
+
+.watcher-stats-stack-row:hover {
+  transform: translateY(-3px) !important;
+  border-color: rgba(244,200,78,.28) !important;
+  box-shadow: 0 25px 48px rgba(0,0,0,.42), 0 0 30px rgba(244,200,78,.08) !important;
+}
+
+.watcher-stat-card-icon {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
   display: grid;
   place-items: center;
-  pointer-events: none;
-  color: #fff;
-  font-weight: 900;
-  font-size: 15px;
-  background: linear-gradient(180deg, rgba(0,0,0,.08), rgba(0,0,0,.32));
+  border: 1px solid rgba(244,200,78,.28);
+  border-radius: 13px;
+  color: var(--watcher-gold-2);
+  background: rgba(244,200,78,.08);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 0 18px rgba(244,200,78,.07);
 }
-.watcher-one-click-sound {
-  margin-top: 12px;
-  min-height: 40px;
-  padding: 0 14px;
-  border: 1px solid rgba(255,255,255,.13);
-  border-radius: 10px;
-  background: rgba(255,255,255,.06);
-  color: #fff;
-  font-weight: 850;
-  cursor: pointer;
+
+.watcher-stat-card-copy {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
 }
-.watcher-stream-page-error { display: grid; place-items: center; padding-top: 14vh; }
-.watcher-stream-fallback { text-align: center; }
-@media (max-width: 780px) {
-  .watcher-stream-page { padding: 10px 10px 18px; }
-  .watcher-stream-topbar { align-items: flex-start; flex-wrap: wrap; }
-  .watcher-stream-heading { order: 2; flex-basis: calc(100% - 60px); }
-  .watcher-stream-episode-controls { order: 3; flex-basis: 100%; }
-  .watcher-stream-episode-controls label { flex: 1; }
-  .watcher-stream-episode-controls select { width: 100%; min-width: 0; }
-  .watcher-one-click-video-shell { min-height: 220px; border-radius: 12px; }
+
+.watcher-stats-stack-row span {
+  font-size: 10px !important;
+  font-weight: 950 !important;
+  letter-spacing: .105em !important;
+  color: rgba(255,255,255,.70) !important;
+  text-transform: uppercase !important;
+}
+
+.watcher-stats-stack-row strong {
+  font-size: clamp(27px, 4vw, 40px) !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+  letter-spacing: -.045em !important;
+  color: #fff !important;
+  text-align: left !important;
+}
+
+@media (max-width: 700px) {
+  .watcher-stats-stack {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .signup-panel .signup-profile-picker {
+    min-height: 70px !important;
+  }
+
+  .signup-panel .signup-single-avatar {
+    width: 48px;
+    height: 48px;
+  }
+
+  .watcher-stats-stack-row {
+    min-height: 126px !important;
+    padding: 18px !important;
+  }
+
+  .watcher-stat-card-icon {
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+  }
 }

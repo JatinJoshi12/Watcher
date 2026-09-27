@@ -52,13 +52,11 @@ export function AuthProvider({ children }) {
       if (!username || !/^[a-z0-9_]{3,24}$/.test(username)) {
         throw new Error('Username Must Be 3–24 Characters Using Letters, Numbers, Or Underscores.')
       }
-      const { data: existingProfile, error: profileLookupError } = await supabase
-        .from('profiles')
-        .select('user_id')
-        .ilike('username', username)
-        .maybeSingle()
-      if (profileLookupError) throw profileLookupError
-      if (existingProfile) throw new Error('That Username Is Already Taken.')
+      const { data: usernameAvailable, error: usernameCheckError } = await supabase
+        .rpc('is_username_available', { candidate: username })
+      const helperMissing = usernameCheckError && ['PGRST202', '42883'].includes(usernameCheckError.code)
+      if (usernameCheckError && !helperMissing) throw usernameCheckError
+      if (usernameAvailable === false) throw new Error('That Username Is Already Taken.')
 
       const result = await supabase.auth.signUp({
         email,

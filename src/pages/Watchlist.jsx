@@ -305,7 +305,7 @@ export default function Watchlist({ onDelete, notify }) {
         </div>
 
         {results.length ? (
-          <WatchlistGrid items={results} onDelete={onDelete} onToggleStatus={toggleStatus} onToggleFavorite={() => {}} onOpenDetails={(item) => setViewTarget(item)} onStream={(item) => navigate(`/watchlists/${id}/items/${item.id}/stream`)} busyId={busyId || addingId} />
+          <WatchlistGrid items={results} onDelete={onDelete} onToggleStatus={toggleStatus} onToggleFavorite={() => {}} onOpenDetails={(item) => setViewTarget(item)} busyId={busyId || addingId} />
         ) : (
           <div className="watcher-watchlist-empty">
             <Icon name="play" size={24} />

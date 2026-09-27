@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context'
 import { getPublicStats } from '../lib/communityRepository'
-import { formatDuration } from '../lib/stats'
 import { searchCatalog, searchPeople, tmdbConfigured } from '../lib/tmdb'
 import { AWARDS_2026, AWARD_SOURCES_2026 } from '../lib/awards'
 import { Icon } from '../components/Icon'
@@ -147,12 +146,10 @@ export default function Stats() {
 
 
   const values = [
-    ['Total Series', stats?.total_series_watched ?? '—'],
-    ['Total Movies', stats?.total_movies_watched ?? '—'],
-    ['Favourite Series Genre', stats?.favourite_series_genre || 'Not Enough Data'],
-    ['Favourite Movie Genre', stats?.favourite_movie_genre || 'Not Enough Data'],
-    ['Series Watch Time', formatDuration(stats?.total_series_watch_time_minutes || 0, true)],
-    ['Movie Watch Time', formatDuration(stats?.total_movie_watch_time_minutes || 0)],
+    ['Total Movies', stats?.total_movies_watched ?? '—', 'clapperboard'],
+    ['Total Series', stats?.total_series_watched ?? '—', 'play'],
+    ['Favourite Movie Genre', stats?.favourite_movie_genre || 'Not Enough Data', 'heart'],
+    ['Favourite Series Genre', stats?.favourite_series_genre || 'Not Enough Data', 'award'],
   ]
 
   return (
@@ -181,10 +178,13 @@ export default function Stats() {
 
         {activeTab === 'stats' ? (
           <section className="watcher-stats-stack" role="tabpanel">
-            {values.map(([label, value]) => (
+            {values.map(([label, value, icon]) => (
               <article className="watcher-stats-stack-row" key={label}>
-                <span>{label}</span>
-                <strong>{value}</strong>
+                <div className="watcher-stat-card-icon"><Icon name={icon} size={18} /></div>
+                <div className="watcher-stat-card-copy">
+                  <span>{label}</span>
+                  <strong>{value}</strong>
+                </div>
               </article>
             ))}
           </section>

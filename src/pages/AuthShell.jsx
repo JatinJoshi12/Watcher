@@ -21,7 +21,7 @@ export function RequireAuth({ children }) {
 export function AuthFooter({ mode }) {
   return (
     <div className="auth-footer">
-      {mode === 'login' ? <span>New here? <Link to="/signup">Create an account</Link></span> : <span>Already have an account? <Link to="/login">Log in</Link></span>}
+      {mode === 'login' ? <span>New Here? <Link to="/signup">Create an Account</Link></span> : <span>Already Have an Account? <Link to="/login">Log In</Link></span>}
     </div>
   )
 }

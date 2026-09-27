@@ -72,9 +72,6 @@ export default function Detail({ notify }) {
             </section>
 
             <div className="watcher-detail-actions">
-              <button className="watcher-primary-button" onClick={() => navigate(`/watchlists/${watchlistId}/items/${itemId}/stream`)} disabled={busy}>
-                <Icon name="play" size={15} /> Stream
-              </button>
               <button className="watcher-danger-button" onClick={() => setDeleteOpen(true)} disabled={busy}>
                 <Icon name="trash" size={15} /> Delete Title
               </button>

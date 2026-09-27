@@ -311,23 +311,6 @@ export async function getRecentTrailers() {
     .slice(0, 30)
 }
 
-
-
-export async function getExternalIds(id, type = 'movie') {
-  const endpoint = type === 'series' ? `/tv/${id}/external_ids` : `/movie/${id}/external_ids`
-  const data = await request(endpoint)
-  return {
-    imdb_id: data.imdb_id || null,
-    tvdb_id: data.tvdb_id || null,
-    tmdb_id: Number(id) || null,
-  }
-}
-
-export async function getSeasonDetails(id, seasonNumber) {
-  if (id == null) throw new Error('Series TMDB ID Is Missing.')
-  return request(`/tv/${id}/season/${Math.max(1, Number(seasonNumber) || 1)}`)
-}
-
 export async function getTitleDetails(id, type = 'movie') {
   const endpoint = type === 'series' ? `/tv/${id}` : `/movie/${id}`
   const data = await request(endpoint)

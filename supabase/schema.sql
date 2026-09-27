@@ -223,6 +223,23 @@ create table if not exists public.profiles (
 create unique index if not exists profiles_username_lower_idx on public.profiles(lower(username));
 create index if not exists profiles_display_name_lower_idx on public.profiles(lower(display_name));
 
+create or replace function public.is_username_available(candidate text)
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+  select not exists (
+    select 1
+    from public.profiles
+    where lower(username) = lower(btrim(candidate))
+  );
+$$;
+
+revoke all on function public.is_username_available(text) from public;
+grant execute on function public.is_username_available(text) to anon;
+grant execute on function public.is_username_available(text) to authenticated;
+
 
 -- Populate profiles for existing accounts. Usernames receive a stable suffix
 -- so two accounts can safely share an email prefix.
@@ -312,6 +329,24 @@ for each row execute function public.set_profile_updated_at();
 alter table public.profiles enable row level security;
 
 revoke all on table public.profiles from anon;
+
+grant select, insert, update on table public.profiles to authenticated;
+
+drop policy if exists "Authenticated users can view profiles" on public.profiles;
+create policy "Authenticated users can view profiles"
+on public.profiles for select to authenticated
+using (true);
+
+drop policy if exists "Users can create their own profile" on public.profiles;
+create policy "Users can create their own profile"
+on public.profiles for insert to authenticated
+with check ((select auth.uid()) = user_id);
+
+drop policy if exists "Users can update their own profile" on public.profiles;
+create policy "Users can update their own profile"
+on public.profiles for update to authenticated
+using ((select auth.uid()) = user_id)
+with check ((select auth.uid()) = user_id);
 
 -- Return only public viewing statistics. The function is security definer so
 -- callers never receive another user's raw watchlist rows.

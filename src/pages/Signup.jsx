@@ -137,12 +137,6 @@ export default function Signup() {
             </button>
           </div>
 
-          <h1>Make It Yours.</h1>
-
-          <p className="auth-copy">
-            Set up your profile once, then keep every movie and series in one place.
-          </p>
-
           {message ? <div className="notice success-notice">{message}</div> : null}
           {error ? <div className="notice error-notice">{error}</div> : null}
 
@@ -175,34 +169,9 @@ export default function Signup() {
               />
             </div>
 
-            <div className="signup-profile-picker">
-              <div className="signup-profile-copy">
-                <span className="signup-field-kicker">PROFILE PICTURE</span>
-                <strong>Pick Your Look</strong>
-                <small>Choose one of the ten Watcher avatars.</small>
-              </div>
-
-              <div
-                className="avatar-choice-grid reference-avatar-grid signup-avatar-grid"
-                role="radiogroup"
-                aria-label="Choose Profile Picture"
-              >
-                {avatarChoices.map((src, index) => (
-                  <label
-                    key={src}
-                    className={`avatar-choice ${avatarUrl === src ? 'selected' : ''}`}
-                    title={`Profile Picture ${index + 1}`}
-                  >
-                    <input
-                      type="radio"
-                      name="profile-avatar"
-                      value={src}
-                      checked={avatarUrl === src}
-                      onChange={() => setAvatarUrl(src)}
-                    />
-                    <img src={src} alt={`Profile Picture ${index + 1}`} />
-                  </label>
-                ))}
+            <div className="signup-profile-picker" aria-label="Profile Picture">
+              <div className="signup-single-avatar">
+                <img src={avatarChoices[0]} alt="Profile Picture" />
               </div>
             </div>
 
