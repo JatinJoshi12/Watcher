@@ -50,7 +50,7 @@ export default function Layout({ children }) {
           </div>
         </div>
       </header>
-      <main className="watcher-main">{children}</main>
+      <main className={`watcher-main ${location.pathname === '/discover' ? 'watcher-main-discover' : ''}`}>{children}</main>
     </div>
   )
 }

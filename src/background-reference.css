@@ -162,3 +162,52 @@
     width: min(calc(100% - 28px), 1080px) !important;
   }
 }
+
+/* =========================================================
+   LATEST REQUEST - HOME SCALE + DISCOVER WALLPAPER STABILITY
+   ========================================================= */
+
+/* Home hero statement: slightly smaller, while preserving the current visual style. */
+.watcher-hero-center h1 {
+  font-size: clamp(68px, 10.5vw, 140px) !important;
+}
+
+/* Home CTA: remove the contradictory resting transform from the earlier layers.
+   The previous stack moved the button from +6px to -3px on hover, which reads as
+   a jump rather than a controlled lift. */
+.watcher-hero-cta {
+  transform: translateY(0) !important;
+  transition:
+    transform .24s cubic-bezier(.2,.75,.2,1),
+    box-shadow .24s ease,
+    background .24s ease,
+    border-color .24s ease !important;
+}
+
+.watcher-hero-cta:hover {
+  transform: translateY(-2px) !important;
+}
+
+.watcher-hero-cta:active {
+  transform: translateY(0) scale(.99) !important;
+}
+
+/* Critical Discover fix: .watcher-main has a filter for global depth. A filtered
+   ancestor establishes the containing block for fixed descendants, so the
+   Discover wallpaper otherwise scrolls/drifts with the main content. */
+.watcher-main-discover {
+  filter: none !important;
+}
+
+.watcher-main-discover .watcher-discover-page {
+  min-height: calc(100vh - 72px) !important;
+}
+
+.watcher-main-discover .watcher-discover-page::before {
+  position: fixed !important;
+  inset: -20px !important;
+  background-position: center center !important;
+  background-size: cover !important;
+  transform: scale(1.035) !important;
+  will-change: auto !important;
+}
