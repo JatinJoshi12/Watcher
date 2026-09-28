@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Icon } from './Icon'
+import { titleCaseText } from '../lib/utils'
 
 export default function AddToWatchlistDialog({ item, watchlists, existingListIds = [], onCreate, onConfirm, onCancel, saving }) {
   const existing = useMemo(() => new Set(existingListIds.map(String)), [existingListIds])
@@ -39,9 +40,9 @@ export default function AddToWatchlistDialog({ item, watchlists, existingListIds
     <div className="add-to-list-panel">
       <div className="selected-catalog-item">
         <PosterCompact item={item} />
-        <div><strong>{item.title}</strong><span>{item.type === 'series' ? 'Web Series' : 'Movie'}{item.year ? ` · ${item.year}` : ''}</span></div>
+        <div><strong>{titleCaseText(item.title)}</strong><span>{item.type === 'series' ? 'Web Series' : 'Movie'}{item.year ? ` · ${item.year}` : ''}</span></div>
       </div>
-      <div className="dialog-section-label">Choose watchlists</div>
+      <div className="dialog-section-label">{titleCaseText('Choose Watch Lists')}</div>
       <div className="watchlist-picker">
         {watchlists.map((list) => {
           const isExisting = existing.has(String(list.id))
@@ -56,26 +57,26 @@ export default function AddToWatchlistDialog({ item, watchlists, existingListIds
               />
               <span className="checkbox-mark"><Icon name="check" size={13} /></span>
               <span>
-                <strong>{list.name}</strong>
-                <small>{isExisting ? 'Already Added' : (list.description || 'Personal collection')}</small>
+                <strong>{titleCaseText(list.name)}</strong>
+                <small>{isExisting ? titleCaseText('Already Added') : titleCaseText(list.description || 'Personal Collection')}</small>
               </span>
             </label>
           )
         })}
-        {!watchlists.length ? <div className="empty-inline">Create your first watchlist below.</div> : null}
+        {!watchlists.length ? <div className="empty-inline">{titleCaseText('Create Your First Watch List Below.')}</div> : null}
       </div>
       <div className="create-list-inline">
-        <div className="dialog-section-label">Create a new watchlist</div>
+        <div className="dialog-section-label">{titleCaseText('Create A New Watch List')}</div>
         <div className="inline-form-grid">
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Horror Movies" aria-label="New watchlist name" />
-          <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Optional description" aria-label="New watchlist description" />
-          <button className="button button-secondary" onClick={createList} disabled={creating || !name.trim()}>{creating ? 'Creating…' : 'Create'}</button>
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder={titleCaseText('E.g. Horror Movies')} aria-label={titleCaseText('New Watch List Name')} />
+          <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder={titleCaseText('Optional Description')} aria-label={titleCaseText('New Watch List Description')} />
+          <button className="button button-secondary" onClick={createList} disabled={creating || !name.trim()}>{creating ? titleCaseText('Creating…') : titleCaseText('Create')}</button>
         </div>
       </div>
       <div className="modal-actions">
-        <button className="button button-secondary" onClick={onCancel}>Cancel</button>
+        <button className="button button-secondary" onClick={onCancel}>{titleCaseText('Cancel')}</button>
         <button className="button button-primary" onClick={() => onConfirm([...selected])} disabled={saving || !selected.size || alreadyEverywhere}>
-          {saving ? 'Saving…' : alreadyEverywhere ? 'Already In All Watch Lists' : 'Add To Selected Watch Lists'}
+          {saving ? titleCaseText('Saving…') : alreadyEverywhere ? titleCaseText('Already In All Watch Lists') : titleCaseText('Add To Selected Watch Lists')}
         </button>
       </div>
     </div>

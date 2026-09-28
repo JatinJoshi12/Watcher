@@ -1680,3 +1680,306 @@ textarea:focus-visible {
     transition-duration: .001ms !important;
   }
 }
+
+/* =========================================================
+   USER REQUESTED POLISH PASS
+   ========================================================= */
+
+/* Home: keep the artwork atmospheric rather than fighting the typography. */
+.watcher-home-page {
+  position: relative !important;
+  isolation: isolate !important;
+  background: transparent !important;
+}
+
+.watcher-home-page::before {
+  content: '' !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: -3 !important;
+  pointer-events: none !important;
+  background: url('/home-background.png') center / cover no-repeat !important;
+  filter: blur(14px) saturate(.72) brightness(.56) !important;
+  transform: scale(1.04) !important;
+  opacity: .86 !important;
+}
+
+.watcher-home-page::after {
+  content: '' !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: -2 !important;
+  pointer-events: none !important;
+  background:
+    radial-gradient(circle at 50% 28%, rgba(244,200,78,.07), transparent 28%),
+    linear-gradient(180deg, rgba(4,5,7,.54), rgba(4,5,7,.78) 55%, rgba(4,5,7,.94)) !important;
+}
+
+.watcher-home-hero {
+  background: transparent !important;
+}
+
+.watcher-home-hero::before {
+  background:
+    radial-gradient(circle at 50% 54%, rgba(244,200,78,.12), transparent 20%),
+    linear-gradient(180deg, rgba(2,3,5,.18), transparent 40%, rgba(2,3,5,.34)) !important;
+}
+
+.watcher-hero-center h1 span {
+  text-transform: uppercase !important;
+}
+
+.watcher-card-add {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 0 !important;
+  text-align: center !important;
+}
+
+.watcher-card-add .icon {
+  position: absolute !important;
+  left: 9px !important;
+  flex: 0 0 auto !important;
+}
+
+/* The Add To Watch List dialog uses the same display casing as the rest of the app. */
+.watcher-picker-modal .modal-header h2,
+.watcher-picker-modal .add-to-list-panel,
+.watcher-picker-modal .add-to-list-panel button,
+.watcher-picker-modal .add-to-list-panel input,
+.watcher-picker-modal .add-to-list-panel strong,
+.watcher-picker-modal .add-to-list-panel small,
+.watcher-picker-modal .dialog-section-label,
+.watcher-picker-modal .empty-inline {
+  font-family: 'Manrope', 'DM Sans', sans-serif !important;
+}
+
+.watcher-picker-modal .add-to-list-panel strong,
+.watcher-picker-modal .add-to-list-panel .dialog-section-label {
+  font-weight: 900 !important;
+}
+
+.watcher-picker-modal .watchlist-option strong,
+.watcher-picker-modal .watchlist-option small {
+  text-transform: none !important;
+}
+
+/* My Watch List: blurred background, fixed to the viewport so page content does not pull it around. */
+.watcher-watchlist-page {
+  position: relative !important;
+  isolation: isolate !important;
+  background: transparent !important;
+}
+
+.watcher-watchlist-page::before {
+  content: '' !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: -3 !important;
+  pointer-events: none !important;
+  background: url('/watchlist-background.png') center / cover no-repeat !important;
+  filter: blur(13px) saturate(.70) brightness(.58) !important;
+  transform: scale(1.04) !important;
+  opacity: .84 !important;
+}
+
+.watcher-watchlist-page::after {
+  content: '' !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: -2 !important;
+  pointer-events: none !important;
+  background: linear-gradient(180deg, rgba(4,5,7,.50), rgba(4,5,7,.82) 52%, rgba(4,5,7,.94)) !important;
+}
+
+/* Discover: the background must stay geometrically stable while filters/search results change. */
+.watcher-discover-page {
+  position: relative !important;
+  isolation: isolate !important;
+  background: transparent !important;
+}
+
+.watcher-discover-page::before {
+  content: '' !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: -3 !important;
+  pointer-events: none !important;
+  background: url('/discover-background.png') center center / cover no-repeat !important;
+  filter: blur(10px) saturate(.68) brightness(.58) !important;
+  transform: scale(1.04) !important;
+  opacity: .80 !important;
+}
+
+.watcher-discover-page::after {
+  content: '' !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: -2 !important;
+  pointer-events: none !important;
+  background: linear-gradient(180deg, rgba(5,6,8,.38), rgba(5,6,8,.84)) !important;
+}
+
+/* Features heading: remove the vacant right edge and make the primary copy deliberate and centered. */
+.watcher-features-heading {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+}
+
+.watcher-features-heading .watcher-kicker,
+.watcher-features-heading h1 {
+  width: 100% !important;
+  text-align: center !important;
+}
+
+.watcher-features-heading h1 {
+  margin-inline: auto !important;
+}
+
+.watcher-features-tabs {
+  width: min(100%, 520px) !important;
+  margin-inline: auto !important;
+}
+
+/* Stats: stronger hierarchy and a calmer, centered composition. */
+.watcher-stats-stack {
+  width: min(100%, 980px) !important;
+  margin-inline: auto !important;
+  gap: 14px !important;
+}
+
+.watcher-stats-stack-row {
+  min-height: 132px !important;
+  padding: 22px 24px !important;
+  border-radius: 20px !important;
+  background:
+    radial-gradient(circle at 10% 50%, rgba(244,200,78,.08), transparent 24%),
+    linear-gradient(145deg, rgba(14,16,22,.94), rgba(5,7,10,.82)) !important;
+  box-shadow: 0 22px 50px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.045) !important;
+}
+
+.watcher-stat-card-copy {
+  min-width: 0 !important;
+}
+
+.watcher-stat-card-copy span {
+  letter-spacing: .11em !important;
+}
+
+.watcher-stats-stack-row strong {
+  letter-spacing: -.04em !important;
+}
+
+/* Awards: contained event cards, better title/filter alignment, and readable winner rows. */
+.watcher-stats-awards-section {
+  width: min(100%, 1180px) !important;
+  margin-inline: auto !important;
+}
+
+.watcher-stats-awards-title-row {
+  align-items: center !important;
+  padding: 24px !important;
+  border: 1px solid rgba(255,255,255,.09) !important;
+  border-radius: 20px !important;
+  background: linear-gradient(145deg, rgba(13,15,20,.90), rgba(5,7,10,.76)) !important;
+  box-shadow: 0 22px 48px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.045) !important;
+}
+
+.watcher-stats-awards-title-row > div {
+  min-width: 0 !important;
+}
+
+.watcher-stats-awards-title-row h2 {
+  margin-top: 7px !important;
+  font-size: clamp(30px, 4vw, 48px) !important;
+}
+
+.watcher-stats-awards-title-row p {
+  max-width: 680px !important;
+  margin: 9px 0 0 !important;
+  color: rgba(255,255,255,.62) !important;
+  line-height: 1.6 !important;
+}
+
+.watcher-stats-award-event {
+  margin-top: 16px !important;
+  padding: 19px !important;
+  border-radius: 20px !important;
+  background:
+    radial-gradient(circle at 90% 0%, rgba(244,200,78,.06), transparent 23%),
+    linear-gradient(145deg, rgba(12,14,19,.94), rgba(5,7,10,.80)) !important;
+  box-shadow: 0 22px 48px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.035) !important;
+}
+
+.watcher-stats-award-heading {
+  align-items: center !important;
+  margin-bottom: 14px !important;
+  padding-bottom: 12px !important;
+  border-bottom: 1px solid rgba(255,255,255,.07) !important;
+}
+
+.watcher-stats-award-heading h3 {
+  font-size: clamp(22px, 3vw, 30px) !important;
+}
+
+.watcher-stats-award-row {
+  min-height: 84px !important;
+  padding: 10px !important;
+  grid-template-columns: 58px minmax(0,1fr) auto !important;
+  border-radius: 13px !important;
+  background: rgba(2,3,5,.34) !important;
+}
+
+.watcher-stats-award-image {
+  width: 58px !important;
+  height: 74px !important;
+  border-radius: 9px !important;
+}
+
+.watcher-stats-award-copy span {
+  font-size: 8px !important;
+  letter-spacing: .11em !important;
+}
+
+.watcher-stats-award-copy strong {
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+}
+
+.watcher-stats-award-row em {
+  min-width: 62px !important;
+  text-align: center !important;
+}
+
+@media (max-width: 700px) {
+  .watcher-stats-awards-title-row,
+  .watcher-stats-award-heading {
+    align-items: flex-start !important;
+    flex-direction: column !important;
+  }
+
+  .watcher-stats-awards-title-row .watcher-award-filter,
+  .watcher-stats-awards-title-row .watcher-award-filter-trigger {
+    width: 100% !important;
+  }
+
+  .watcher-stats-award-row {
+    grid-template-columns: 50px minmax(0,1fr) !important;
+  }
+
+  .watcher-stats-award-image {
+    width: 50px !important;
+    height: 66px !important;
+  }
+
+  .watcher-stats-award-row em {
+    grid-column: 2 !important;
+    justify-self: start !important;
+    text-align: left !important;
+  }
+}

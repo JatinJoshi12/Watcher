@@ -162,7 +162,6 @@ export default function Stats() {
         <section className="watcher-feature-heading watcher-features-heading">
           <span className="watcher-kicker">WATCHER FEATURES</span>
           <h1>Features</h1>
-          <p>Stats and awards, gathered in one place.</p>
         </section>
 
         <div className="watcher-features-tabs" role="tablist" aria-label="Features">

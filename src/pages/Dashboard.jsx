@@ -149,9 +149,9 @@ export default function Dashboard({ notify }) {
         <div className="watcher-hero-glow watcher-hero-glow-two" />
         <div className="watcher-hero-center">
           <h1>
-            <span>Watch.</span>
-            <span>Discover.</span>
-            <span>Repeat.</span>
+            <span>WATCH</span>
+            <span>DISCOVER</span>
+            <span>REPEAT</span>
           </h1>
           <button
             className="watcher-hero-cta"
