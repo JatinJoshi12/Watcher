@@ -4,6 +4,7 @@ import App from './App'
 import './styles.css'
 import './theme.css'
 import './premium-v2.css'
+import './maximalist.css'
 
 const savedTheme = localStorage.getItem('watchlist_theme') || 'dark'
 document.documentElement.dataset.theme = savedTheme

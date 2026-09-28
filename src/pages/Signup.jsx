@@ -169,9 +169,31 @@ export default function Signup() {
               />
             </div>
 
-            <div className="signup-profile-picker" aria-label="Profile Picture">
-              <div className="signup-single-avatar">
-                <img src={avatarChoices[0]} alt="Profile Picture" />
+            <div className="signup-profile-picker">
+              <div className="signup-profile-copy">
+                <span className="signup-field-kicker">PROFILE PICTURE</span>
+                <strong>Choose Your Watcher Avatar</strong>
+                <small>Select the image that will represent you across the app.</small>
+              </div>
+
+              <div className="signup-avatar-grid" role="radiogroup" aria-label="Choose Profile Picture">
+                {avatarChoices.map((src, index) => (
+                  <label
+                    className={`avatar-choice ${avatarUrl === src ? 'selected' : ''}`}
+                    key={src}
+                    title={`Profile Picture ${index + 1}`}
+                  >
+                    <input
+                      type="radio"
+                      name="signup-avatar"
+                      value={src}
+                      checked={avatarUrl === src}
+                      onChange={() => setAvatarUrl(src)}
+                    />
+                    <img src={src} alt={`Profile Picture ${index + 1}`} />
+                    <span className="avatar-choice-check" aria-hidden="true">✓</span>
+                  </label>
+                ))}
               </div>
             </div>
 
