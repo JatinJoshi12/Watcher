@@ -211,3 +211,233 @@
   transform: scale(1.035) !important;
   will-change: auto !important;
 }
+
+/* =========================================================
+   LATEST REQUEST - ALL-PAGES HOME BACKGROUND + HOME HERO EDGE/CTA FIXES
+   ========================================================= */
+
+/* Use the same blurred Home artwork as the page background throughout the
+   authenticated app. Keep internal cards/sections untouched. */
+.watcher-watchlists-page,
+.watcher-watchlist-page,
+.watcher-detail-page,
+.watcher-discover-page,
+.watcher-settings-page,
+.watcher-feature-page,
+.watcher-features-page,
+.watcher-profile-page,
+.watcher-public-profile-page,
+.watcher-picker-page {
+  background: transparent !important;
+}
+
+/* Remove page-specific full-screen wallpaper layers so the shared Home
+   background in .watcher-shell is the only page-level artwork. */
+.watcher-watchlist-page::before,
+.watcher-watchlist-page::after,
+.watcher-detail-page::before,
+.watcher-detail-page::after,
+.watcher-discover-page::before,
+.watcher-discover-page::after,
+.watcher-settings-page::before,
+.watcher-settings-page::after {
+  content: none !important;
+  background: none !important;
+}
+
+/* Preserve the Home hero's readable foreground treatment. */
+.watcher-home-page,
+.watcher-home-hero {
+  background: transparent !important;
+}
+
+/* Give the large hero wordmark a small amount of horizontal breathing room
+   so the right edge of DISCOVER does not clip against the hero bounds. */
+.watcher-hero-center h1 {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  padding-inline: 0.10em !important;
+  overflow: visible !important;
+}
+
+.watcher-hero-center h1 span {
+  flex-shrink: 0 !important;
+}
+
+/* Remove the white-looking hover edge from the Home CTA. */
+.watcher-hero-cta:hover {
+  border-color: rgba(244,200,78,.48) !important;
+  box-shadow:
+    0 20px 46px rgba(244,200,78,.24),
+    0 0 28px rgba(244,200,78,.11) !important;
+}
+
+/* =========================================================
+   V7 - SHARED HOME BACKGROUND + DEFINITIVE CTA HOVER FIX
+   ========================================================= */
+
+/* Keep the Home artwork on the application shell itself so every page sees
+   the exact same background while the page content scrolls above it. */
+.watcher-shell {
+  background:
+    linear-gradient(180deg, rgba(0,0,0,.20), rgba(0,0,0,.64) 58%, rgba(4,5,7,.90)),
+    url('/home-background.png') center top / cover fixed no-repeat !important;
+  background-color: #050608 !important;
+}
+
+/* Keep the shell overlays lightweight. The artwork comes from the shell
+   background above, not from individual page pseudo-elements. */
+.watcher-shell::before {
+  content: '' !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: -2 !important;
+  pointer-events: none !important;
+  display: block !important;
+  background: radial-gradient(circle at 50% 0%, rgba(244,200,78,.08), transparent 30%) !important;
+  filter: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+}
+
+.watcher-shell::after {
+  content: '' !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: -1 !important;
+  pointer-events: none !important;
+  display: block !important;
+  background: transparent !important;
+  backdrop-filter: blur(.7px) !important;
+  opacity: 1 !important;
+}
+
+/* Every app page is transparent at the page level so the same Home artwork
+   remains visible everywhere. Internal cards keep their own surfaces. */
+.watcher-home-page,
+.watcher-discover-page,
+.watcher-settings-page,
+.watcher-feature-page,
+.watcher-features-page,
+.watcher-watchlists-page,
+.watcher-watchlist-page,
+.watcher-detail-page,
+.watcher-profile-page,
+.watcher-public-profile-page,
+.watcher-picker-page {
+  background: transparent !important;
+}
+
+/* Disable page-specific full-screen wallpaper layers. Discover therefore has
+   no artwork attached to its changing result/filter content at all. */
+.watcher-home-page::before,
+.watcher-home-page::after,
+.watcher-discover-page::before,
+.watcher-discover-page::after,
+.watcher-settings-page::before,
+.watcher-settings-page::after,
+.watcher-watchlist-page::before,
+.watcher-watchlist-page::after,
+.watcher-detail-page::before,
+.watcher-detail-page::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+}
+
+.watcher-main-discover {
+  filter: none !important;
+  transform: none !important;
+}
+
+/* Home hero: preserve the atmospheric foreground glow without adding another
+   full-page wallpaper layer. */
+.watcher-home-hero {
+  background: transparent !important;
+}
+
+/* Home CTA: remove the global glossy white hover treatment and browser focus
+   ring. Keep only the controlled lift and gold glow. */
+button.watcher-hero-cta,
+a.watcher-hero-cta {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  outline: none !important;
+  -webkit-focus-ring-color: transparent !important;
+  border: 1px solid rgba(244,200,78,.32) !important;
+  box-shadow:
+    0 16px 40px rgba(244,200,78,.18),
+    0 0 22px rgba(244,200,78,.08) !important;
+  transition:
+    transform .24s cubic-bezier(.2,.75,.2,1),
+    box-shadow .24s ease,
+    border-color .24s ease,
+    background-color .24s ease !important;
+}
+
+button.watcher-hero-cta::after,
+a.watcher-hero-cta::after {
+  content: none !important;
+  display: none !important;
+}
+
+button.watcher-hero-cta:hover,
+button.watcher-hero-cta:focus,
+button.watcher-hero-cta:focus-visible,
+a.watcher-hero-cta:hover,
+a.watcher-hero-cta:focus,
+a.watcher-hero-cta:focus-visible {
+  outline: none !important;
+  border-color: rgba(244,200,78,.42) !important;
+  box-shadow:
+    0 20px 44px rgba(244,200,78,.21),
+    0 0 25px rgba(244,200,78,.11) !important;
+  transform: translateY(-2px) !important;
+}
+
+button.watcher-hero-cta:active,
+a.watcher-hero-cta:active {
+  outline: none !important;
+  border-color: rgba(244,200,78,.36) !important;
+  box-shadow:
+    0 14px 30px rgba(244,200,78,.16),
+    0 0 18px rgba(244,200,78,.08) !important;
+  transform: translateY(0) scale(.99) !important;
+}
+
+/* =========================================================
+   V8 - RESTORE V4 BACKGROUND BLUR TREATMENT
+   Keep the shared Home background on every page, but blur it
+   the same way as the V4 treatment.
+   ========================================================= */
+
+.watcher-shell {
+  background: #050608 !important;
+}
+
+.watcher-shell::before {
+  content: '' !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: -2 !important;
+  pointer-events: none !important;
+  display: block !important;
+  background: url('/home-background.png') center top / cover no-repeat !important;
+  filter: blur(6px) saturate(.90) !important;
+  transform: scale(1.025) !important;
+  opacity: .88 !important;
+}
+
+.watcher-shell::after {
+  content: '' !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: -1 !important;
+  pointer-events: none !important;
+  display: block !important;
+  background:
+    linear-gradient(180deg, rgba(0,0,0,.20), rgba(0,0,0,.64) 58%, rgba(4,5,7,.90)) !important;
+  backdrop-filter: blur(2px) !important;
+  -webkit-backdrop-filter: blur(2px) !important;
+  opacity: 1 !important;
+}
