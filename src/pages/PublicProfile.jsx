@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getProfile, getPublicStats } from '../lib/communityRepository'
-import { formatDuration } from '../lib/stats'
 import { Icon } from '../components/Icon'
 
 
@@ -41,8 +40,6 @@ export default function PublicProfile() {
           <article><span>Total Series</span><strong>{stats?.total_series_watched ?? 0}</strong></article>
           <article><span>Favourite Movie Genre</span><strong>{stats?.favourite_movie_genre || 'Not Enough Data'}</strong></article>
           <article><span>Favourite Series Genre</span><strong>{stats?.favourite_series_genre || 'Not Enough Data'}</strong></article>
-          <article><span>Movie Watch Time</span><strong>{formatDuration(stats?.total_movie_watch_time_minutes || 0)}</strong></article>
-          <article><span>Series Watch Time</span><strong>{formatDuration(stats?.total_series_watch_time_minutes || 0, true)}</strong></article>
         </section>
       </div>
     </div>

@@ -173,7 +173,6 @@ export default function Signup() {
               <div className="signup-profile-copy">
                 <span className="signup-field-kicker">PROFILE PICTURE</span>
                 <strong>Choose Your Watcher Avatar</strong>
-                <small>Select the image that will represent you across the app.</small>
               </div>
 
               <div className="signup-avatar-grid" role="radiogroup" aria-label="Choose Profile Picture">

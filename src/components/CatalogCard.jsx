@@ -39,7 +39,11 @@ export default function CatalogCard({ item, onAdd, onView, inWatchlists = [] }) 
               View
             </button>
           ) : null}
-          {inWatchlists.length ? <span className="watcher-saved-chip">Saved</span> : null}
+          {inWatchlists.length ? (
+            <span className="watcher-saved-chip" title="Saved" aria-label="Saved">
+              <Icon name="check" size={16} strokeWidth={2.4} />
+            </span>
+          ) : null}
         </div>
       </div>
     </article>

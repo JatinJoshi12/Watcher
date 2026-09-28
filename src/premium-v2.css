@@ -8048,3 +8048,210 @@ html:has(.auth-page.signup-auth-page) {
     flex-basis: 40px;
   }
 }
+
+
+/* =========================================================
+   LATEST UI FIXES - AUTH SCROLL, HOME ATMOSPHERE, MODALS,
+   SAVED STATE, DISCOVER BACKGROUND + PUBLIC PROFILE
+   ========================================================= */
+
+/* Login: keep the viewport locked so no accidental horizontal/vertical
+   page scrolling appears around the compact auth panel. */
+html:has(.auth-page.login-auth-page),
+body:has(.auth-page.login-auth-page) {
+  width: 100% !important;
+  max-width: 100vw !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+.auth-page.login-auth-page {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 100svh !important;
+  min-height: 100svh !important;
+  max-height: 100svh !important;
+  padding: 20px !important;
+  overflow: hidden !important;
+  overflow-x: hidden !important;
+  overflow-y: hidden !important;
+}
+
+.auth-page.login-auth-page .cinematic-auth-panel {
+  max-width: min(520px, calc(100vw - 40px)) !important;
+  max-height: calc(100svh - 40px) !important;
+  overflow: hidden !important;
+}
+
+/* Signup: the profile-picker label reads as a centered caption and no longer
+   repeats the removed explanatory sentence. */
+.signup-panel .signup-profile-picker {
+  justify-items: center !important;
+}
+
+.signup-panel .signup-profile-copy {
+  width: 100% !important;
+  text-align: center !important;
+}
+
+.signup-panel .signup-profile-copy small {
+  display: none !important;
+}
+
+.signup-panel .signup-field-kicker,
+.signup-panel .signup-profile-copy strong {
+  display: block !important;
+  text-align: center !important;
+}
+
+/* Home: put the artwork on an isolated blurred layer so large typography
+   stays crisp while the background stops competing with it. */
+.watcher-home-page {
+  position: relative !important;
+  isolation: isolate !important;
+  background: transparent !important;
+}
+
+.watcher-home-page::before {
+  content: '';
+  position: fixed;
+  inset: -24px;
+  z-index: -3;
+  pointer-events: none;
+  background: url('/home-background.png') center top / cover no-repeat;
+  filter: blur(11px) saturate(.82) brightness(.72) !important;
+  transform: scale(1.055);
+  opacity: .74;
+}
+
+.watcher-home-page::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(4,5,7,.38), rgba(4,5,7,.72)),
+    radial-gradient(circle at 50% 28%, rgba(244,200,78,.08), transparent 36%);
+}
+
+.watcher-home-hero {
+  background: transparent !important;
+}
+
+.watcher-home-hero::before {
+  background:
+    radial-gradient(circle at 50% 54%, rgba(244,200,78,.16), transparent 19%),
+    linear-gradient(180deg, rgba(2,3,5,.08), transparent 40%, rgba(2,3,5,.55)) !important;
+}
+
+.watcher-hero-center h1 {
+  text-transform: none !important;
+}
+
+/* Catalog saved state: icon-only, green confirmation rather than text. */
+.watcher-saved-chip {
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px !important;
+  padding: 0 !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  border: 1px solid rgba(77, 222, 128, .36) !important;
+  border-radius: 10px !important;
+  background: rgba(34, 197, 94, .10) !important;
+  color: #4ade80 !important;
+  box-shadow: 0 0 18px rgba(34,197,94,.12), inset 0 1px 0 rgba(255,255,255,.06) !important;
+  font-size: 0 !important;
+}
+
+.watcher-saved-chip .icon {
+  color: #4ade80 !important;
+  filter: drop-shadow(0 0 8px rgba(34,197,94,.28)) !important;
+}
+
+/* Discover: stop using a fixed viewport background layer. Keeping it inside
+   the page root prevents the artwork from drifting during interaction/scroll. */
+.watcher-discover-page {
+  position: relative !important;
+  isolation: isolate !important;
+  background: transparent !important;
+}
+
+.watcher-discover-page::before {
+  content: '';
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: -3 !important;
+  pointer-events: none !important;
+  background: url('/discover-background.png') center top / cover no-repeat !important;
+  filter: blur(9px) saturate(.78) brightness(.72) !important;
+  transform: scale(1.025) !important;
+  opacity: .78 !important;
+}
+
+.watcher-discover-page::after {
+  content: '';
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: -2 !important;
+  pointer-events: none !important;
+  background: linear-gradient(180deg, rgba(5,6,8,.30), rgba(5,6,8,.80)) !important;
+  backdrop-filter: none !important;
+}
+
+/* Public profiles are still reachable from Discover, but watch-time totals
+   for movie/series are intentionally not exposed there. */
+.watcher-public-profile-page .watcher-public-stats-stack article:nth-child(n+5) {
+  display: none !important;
+}
+
+/* Modal hardening: fixed viewport centering plus containment. The React portal
+   in Modal.jsx removes transformed-parent positioning from the equation. */
+.modal-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100svh !important;
+  display: grid !important;
+  place-items: center !important;
+  align-items: center !important;
+  justify-items: center !important;
+  padding: 20px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+.modal {
+  margin: 0 !important;
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  transform: none !important;
+}
+
+html.modal-open,
+body.modal-open {
+  overflow: hidden !important;
+}
+
+@media (max-width: 560px) {
+  .modal-backdrop {
+    padding: 10px !important;
+  }
+
+  .auth-page.login-auth-page {
+    padding: 12px !important;
+  }
+
+  .auth-page.login-auth-page .cinematic-auth-panel {
+    max-width: calc(100vw - 24px) !important;
+    max-height: calc(100svh - 24px) !important;
+  }
+
+  .watcher-saved-chip {
+    width: 31px !important;
+    height: 31px !important;
+    min-width: 31px !important;
+  }
+}

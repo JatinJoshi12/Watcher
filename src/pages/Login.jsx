@@ -88,7 +88,7 @@ export default function Login() {
 
   return (
     <PublicOnly>
-      <main className="auth-page auth-background-page">
+      <main className="auth-page auth-background-page login-auth-page">
 
         <div className="auth-panel cinematic-auth-panel">
           <div className="brand auth-brand cinematic-auth-brand">
