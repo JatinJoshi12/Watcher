@@ -193,7 +193,6 @@ export default function Stats() {
               <div>
                 <span className="watcher-kicker">2026 RESULTS</span>
                 <h2>Awards</h2>
-                <p>Major film and television winners, with artwork where Watcher can match the title or person.</p>
               </div>
               <AwardFilter
                 value={awardFilter}

@@ -5,6 +5,7 @@ import './styles.css'
 import './theme.css'
 import './premium-v2.css'
 import './maximalist.css'
+import './background-reference.css'
 
 const savedTheme = localStorage.getItem('watchlist_theme') || 'dark'
 document.documentElement.dataset.theme = savedTheme

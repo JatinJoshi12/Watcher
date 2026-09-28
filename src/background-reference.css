@@ -1,0 +1,164 @@
+/* =========================================================
+   BACKGROUND REFERENCE PARITY
+   Matches the background treatment from the supplied Watcher(10).zip.
+   Content, business logic, and component structure remain unchanged.
+   ========================================================= */
+
+/* Match the reference shell atmosphere. */
+.watcher-shell {
+  min-height: 100vh !important;
+  isolation: isolate !important;
+  overflow-x: clip !important;
+  background: var(--watcher-black) !important;
+}
+
+.watcher-shell::before {
+  background: url('/home-background.png') center top / cover no-repeat !important;
+  filter: blur(6px) saturate(.90) !important;
+  transform: scale(1.025) !important;
+  opacity: .88 !important;
+}
+
+.watcher-shell::after {
+  background:
+    linear-gradient(180deg, rgba(0,0,0,.20), rgba(0,0,0,.64) 58%, rgba(4,5,7,.90)) !important;
+  backdrop-filter: blur(2px) !important;
+  opacity: 1 !important;
+}
+
+/* Home: let the shell artwork show through instead of layering a second,
+   competing page-level image. */
+.watcher-home-page {
+  background: transparent !important;
+}
+
+.watcher-home-page::before,
+.watcher-home-page::after {
+  content: none !important;
+}
+
+.watcher-home-hero {
+  background: transparent !important;
+}
+
+.watcher-home-hero::before {
+  background:
+    radial-gradient(circle at 50% 58%, rgba(244,200,78,.17), transparent 22%),
+    linear-gradient(180deg, rgba(5,6,8,.22), rgba(5,6,8,.02) 50%, rgba(5,6,8,.66)) !important;
+}
+
+.watcher-home-hero::after {
+  background: transparent !important;
+  opacity: 0 !important;
+}
+
+/* Watch List detail: use the reference's isolated blurred artwork layer. */
+.watcher-watchlist-page,
+.watcher-detail-page {
+  position: relative !important;
+  isolation: isolate !important;
+  background: #050608 !important;
+}
+
+.watcher-watchlist-page::before,
+.watcher-detail-page::before {
+  content: '' !important;
+  position: fixed !important;
+  inset: -18px !important;
+  z-index: -3 !important;
+  pointer-events: none !important;
+  background: url('/watchlist-background.png') center / cover no-repeat !important;
+  filter: blur(8px) saturate(.88) !important;
+  transform: scale(1.035) !important;
+  opacity: .82 !important;
+}
+
+.watcher-watchlist-page::after,
+.watcher-detail-page::after {
+  content: '' !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: -2 !important;
+  pointer-events: none !important;
+  background: linear-gradient(
+    180deg,
+    rgba(4,5,7,.34),
+    rgba(4,5,7,.70) 54%,
+    rgba(4,5,7,.88)
+  ) !important;
+}
+
+/* Discover: same supplied-image treatment as the reference project. */
+.watcher-discover-page,
+.watcher-settings-page {
+  position: relative !important;
+  isolation: isolate !important;
+  background: transparent !important;
+}
+
+.watcher-discover-page::before,
+.watcher-settings-page::before {
+  content: '' !important;
+  position: fixed !important;
+  inset: -16px !important;
+  z-index: -3 !important;
+  pointer-events: none !important;
+  background: center / cover no-repeat !important;
+  filter: blur(7px) saturate(.86) !important;
+  transform: scale(1.035) !important;
+  opacity: .80 !important;
+}
+
+.watcher-discover-page::before {
+  background-image: url('/discover-background.png') !important;
+}
+
+.watcher-settings-page::before {
+  background-image: url('/settings-background.png') !important;
+}
+
+.watcher-discover-page::after,
+.watcher-settings-page::after {
+  content: '' !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: -2 !important;
+  pointer-events: none !important;
+  background: linear-gradient(180deg, rgba(5,6,8,.34), rgba(5,6,8,.84)) !important;
+}
+
+/* Features: center the complete feature surface instead of letting it stretch
+   across the full 1480px page container. */
+.watcher-feature-container {
+  width: min(calc(100% - 46px), 1080px) !important;
+  margin-inline: auto !important;
+}
+
+.watcher-features-heading {
+  width: min(100%, 900px) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  text-align: center !important;
+}
+
+.watcher-features-tabs {
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.watcher-stats-stack,
+.watcher-stats-feature-section {
+  width: min(100%, 980px) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.watcher-stats-stack {
+  margin-top: 22px !important;
+}
+
+@media (max-width: 560px) {
+  .watcher-feature-container {
+    width: min(calc(100% - 28px), 1080px) !important;
+  }
+}
