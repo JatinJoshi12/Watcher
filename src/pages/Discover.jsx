@@ -180,9 +180,19 @@ export default function Discover({ notify }) {
   const movieResults = activeSearch ? searchMovies : movies
   const seriesResults = activeSearch ? searchSeries : series
 
-  const existingListIds = (catalogItem) => items
-    .filter((item) => item.tmdb_id === catalogItem.tmdb_id && item.type === catalogItem.type)
-    .map((item) => item.watchlist_id)
+  const userItemMap = useMemo(() => {
+    const map = new Map()
+    for (const item of items) {
+      const key = `${item.type}-${item.tmdb_id}`
+      if (!map.has(key)) map.set(key, [])
+      map.get(key).push(item.watchlist_id)
+    }
+    return map
+  }, [items])
+
+  const existingListIds = (catalogItem) => {
+    return userItemMap.get(`${catalogItem.type}-${catalogItem.tmdb_id}`) || []
+  }
 
   const openAdd = (item) => {
     if (!watchlists.length) {

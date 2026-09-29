@@ -6,6 +6,8 @@ import './theme.css'
 import './premium-v2.css'
 import './maximalist.css'
 import './background-reference.css'
+import './mobile.css'
+import './smooth-animations.css'
 
 const savedTheme = localStorage.getItem('watchlist_theme') || 'dark'
 document.documentElement.dataset.theme = savedTheme

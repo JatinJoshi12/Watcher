@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useLibrary } from '../context'
 import { getHomeCatalog, getRecentTrailers, getTitleDetails, tmdbConfigured } from '../lib/tmdb'
@@ -55,6 +55,7 @@ export default function Dashboard({ notify }) {
   })
   const [trailers, setTrailers] = useState([])
   const [loading, setLoading] = useState(true)
+  const [loadingTrailers, setLoadingTrailers] = useState(true)
   const [error, setError] = useState('')
   const [addTarget, setAddTarget] = useState(null)
   const [adding, setAdding] = useState(false)
@@ -67,23 +68,52 @@ export default function Dashboard({ notify }) {
     }
 
     let active = true
-    Promise.all([getHomeCatalog(), getRecentTrailers()])
-      .then(([home, latestTrailers]) => {
+    
+    // Fetch home catalog first to unblock UI
+    getHomeCatalog()
+      .then((home) => {
         if (!active) return
         setCatalog(home)
-        setTrailers(latestTrailers)
+        setLoading(false)
+        
+        // Then fetch trailers in the background
+        getRecentTrailers()
+          .then((latestTrailers) => {
+            if (active) {
+              setTrailers(latestTrailers)
+              setLoadingTrailers(false)
+            }
+          })
+          .catch((err) => {
+            console.error('Failed to load trailers:', err)
+            if (active) setLoadingTrailers(false)
+          })
       })
-      .catch((err) => active && setError(err.message || 'Unable To Load Home Content.'))
-      .finally(() => active && setLoading(false))
+      .catch((err) => {
+        if (active) {
+          setError(err.message || 'Unable To Load Home Content.')
+          setLoading(false)
+        }
+      })
 
     return () => {
       active = false
     }
   }, [])
 
-  const existingListIds = (catalogItem) => items
-    .filter((item) => item.tmdb_id === catalogItem.tmdb_id && item.type === catalogItem.type)
-    .map((item) => item.watchlist_id)
+  const userItemMap = useMemo(() => {
+    const map = new Map()
+    for (const item of items) {
+      const key = `${item.type}-${item.tmdb_id}`
+      if (!map.has(key)) map.set(key, [])
+      map.get(key).push(item.watchlist_id)
+    }
+    return map
+  }, [items])
+
+  const existingListIds = (catalogItem) => {
+    return userItemMap.get(`${catalogItem.type}-${catalogItem.tmdb_id}`) || []
+  }
 
   const openAdd = (item) => {
     if (!watchlists.length) {
@@ -172,7 +202,7 @@ export default function Dashboard({ notify }) {
           <div className="watcher-section-title-row">
             <h2>Latest Trailers And Teasers</h2>
           </div>
-          {loading ? (
+          {loadingTrailers ? (
             <div className="watcher-trailer-skeletons">
               {Array.from({ length: 6 }, (_, index) => <div className="watcher-trailer-skeleton" key={index} />)}
             </div>

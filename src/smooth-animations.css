@@ -1,0 +1,95 @@
+/* =========================================================
+   WATCHER SMOOTH UI ENHANCEMENTS
+   ========================================================= */
+
+html {
+  scroll-behavior: smooth !important;
+}
+
+/* Subtle page load fade */
+.watcher-main {
+  animation: smoothFadeIn 0.4s ease-out forwards;
+}
+
+@keyframes smoothFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Fluid Hover Transitions (Optimized for Performance) */
+button, 
+.watcher-catalog-card,
+.watcher-saved-card,
+.watcher-trailer-card,
+.watcher-brand {
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+              background-color 0.25s ease, 
+              border-color 0.25s ease, 
+              opacity 0.25s ease !important;
+  will-change: transform;
+}
+
+/* Gentle press effect */
+button:active,
+.watcher-catalog-card:active,
+.watcher-trailer-card:active {
+  transform: scale(0.98) translateY(1px) !important;
+}
+
+/* Refined Modal animations */
+.modal {
+  animation: modalFadeScale 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards !important;
+}
+
+.modal-backdrop {
+  animation: backdropFade 0.25s ease forwards !important;
+}
+
+@keyframes modalFadeScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.97) translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes backdropFade {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* Input Focus Transitions */
+input, select, textarea {
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease !important;
+}
+
+input:focus, select:focus, textarea:focus {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(244, 200, 78, 0.08) !important;
+}
+
+/* Premium Skeleton Loading */
+.watcher-card-skeleton,
+.watcher-trailer-skeleton {
+  animation: smoothShimmer 1.8s infinite ease-in-out !important;
+  background: linear-gradient(110deg, 
+    rgba(255,255,255,0.03) 25%, 
+    rgba(255,255,255,0.08) 50%, 
+    rgba(255,255,255,0.03) 75%
+  ) !important;
+  background-size: 200% 100% !important;
+}
+
+@keyframes smoothShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

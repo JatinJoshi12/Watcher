@@ -1,0 +1,212 @@
+/* Mobile Responsive Fixes - Additive only, no desktop changes */
+
+@media (max-width: 1024px) {
+  .page-container {
+    width: calc(100% - 32px) !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .watcher-topbar-inner {
+    grid-template-columns: 1fr;
+    gap: 12px !important;
+    padding: 12px !important;
+    min-height: auto !important;
+  }
+  
+  .watcher-brand {
+    justify-self: center;
+  }
+  
+  .watcher-nav-pill {
+    justify-self: center;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+  }
+
+  .watcher-nav-button {
+    white-space: nowrap !important;
+  }
+  
+  .watcher-topbar-actions {
+    justify-self: center;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Hero fixes */
+  .watcher-home-hero {
+    min-height: auto !important;
+    padding: 60px 0 !important;
+  }
+
+  .watcher-hero-center {
+    padding: 20px !important;
+  }
+
+  .watcher-hero-center h1 {
+    font-size: clamp(36px, 12vw, 70px) !important;
+  }
+
+  /* Typography */
+  .watcher-section-title-row h2,
+  .watcher-discover-section-heading h2,
+  .watcher-watchlists-heading-content h1,
+  .watcher-watchlist-hero-copy h1,
+  .watcher-settings-title h1,
+  .watcher-feature-heading h1,
+  .watcher-public-profile-header h1 {
+    font-size: clamp(24px, 6vw, 36px) !important;
+  }
+
+  /* Discover Page Fixes */
+  .watcher-discover-search {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  
+  .watcher-discover-search input {
+    width: 100% !important;
+    margin-bottom: 8px !important;
+  }
+
+  .watcher-search-main-button {
+    width: 100% !important;
+  }
+
+  .watcher-discover-search-mode-bar,
+  .watcher-discover-genres {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    justify-content: center !important;
+  }
+
+  .watcher-discover-search-mode-bar button,
+  .watcher-discover-genres button {
+    flex: 1 1 auto !important;
+  }
+
+  /* Watchlists */
+  .watcher-watchlists-heading-card {
+    flex-direction: column !important;
+    padding: 24px !important;
+    text-align: center !important;
+  }
+
+  /* Modals */
+  .modal-backdrop {
+    padding: 12px !important;
+  }
+
+  .modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: calc(100vh - 24px) !important;
+  }
+  
+  /* Posters and Rails */
+  .watcher-poster-rail, .watcher-trailer-rail {
+    padding-bottom: 24px !important;
+  }
+
+  /* Buttons */
+  .watcher-primary-button,
+  .watcher-danger-button,
+  .watcher-secondary-button,
+  .watcher-create-button,
+  .watcher-hero-cta,
+  .watcher-search-main-button,
+  .watcher-show-more,
+  .watcher-open-list-button,
+  .watcher-card-add,
+  .watcher-card-view,
+  .watcher-status-action,
+  .watcher-square-action,
+  .watcher-back-button {
+    white-space: normal !important;
+    height: auto !important;
+    min-height: 44px !important;
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+  }
+
+  .watcher-catalog-footer,
+  .watcher-saved-actions {
+    flex-wrap: wrap !important;
+  }
+  
+  .watcher-card-add,
+  .watcher-card-view,
+  .watcher-status-action {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+  
+  /* Prevent horizontal scroll */
+  body, html, #root, .watcher-shell {
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Ultra-small screens (320px, 360px) */
+  .watcher-topbar-actions {
+    gap: 6px !important;
+  }
+  
+  .watcher-discover-button,
+  .watcher-settings-button,
+  .watcher-stats-button {
+    padding: 0 10px !important;
+    font-size: 10px !important;
+    min-height: 36px !important;
+  }
+
+  .watcher-settings-button {
+    width: auto !important;
+  }
+  
+  .watcher-nav-pill {
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+  }
+
+  .watcher-nav-button {
+    padding: 0 10px !important;
+    font-size: 11px !important;
+    min-height: 36px !important;
+    white-space: nowrap !important;
+    flex: 1 1 auto !important;
+  }
+  
+  .watcher-brand-text {
+    font-size: 20px !important;
+  }
+  
+  .watcher-poster-rail {
+    grid-auto-columns: 130px !important;
+  }
+
+  .watcher-trailer-rail {
+    grid-auto-columns: 240px !important;
+  }
+
+  .watcher-catalog-body {
+    padding: 10px !important;
+  }
+  
+  .watcher-catalog-body h3,
+  .watcher-saved-title {
+    font-size: 12px !important;
+  }
+
+  .watcher-hero-glow-one,
+  .watcher-hero-glow-two {
+    display: none !important;
+  }
+}
