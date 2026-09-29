@@ -137,6 +137,7 @@
   .watcher-catalog-footer,
   .watcher-saved-actions {
     flex-wrap: wrap !important;
+    gap: 8px !important;
   }
   
   .watcher-card-add,
@@ -144,6 +145,7 @@
   .watcher-status-action {
     width: 100% !important;
     justify-content: center !important;
+    margin-top: 4px;
   }
   
   /* Prevent horizontal scroll */
