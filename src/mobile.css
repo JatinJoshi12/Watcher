@@ -134,14 +134,29 @@
     padding-bottom: 8px !important;
   }
 
-  .watcher-catalog-footer,
+  .watcher-catalog-footer {
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+  }
+
   .watcher-saved-actions {
     flex-wrap: wrap !important;
     gap: 8px !important;
   }
   
   .watcher-card-add,
-  .watcher-card-view,
+  .watcher-card-view {
+    flex: 1 !important;
+    width: auto !important;
+    justify-content: center !important;
+    margin-top: 4px;
+  }
+
+  .watcher-card-add span,
+  .watcher-card-view span {
+    display: none !important;
+  }
+
   .watcher-status-action {
     width: 100% !important;
     justify-content: center !important;
@@ -207,8 +222,3 @@
     font-size: 12px !important;
   }
 
-  .watcher-hero-glow-one,
-  .watcher-hero-glow-two {
-    display: none !important;
-  }
-}

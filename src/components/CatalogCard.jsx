@@ -31,12 +31,12 @@ export default function CatalogCard({ item, onAdd, onView, inWatchlists = [] }) 
         <div className="watcher-catalog-footer">
           <button className="watcher-card-add" onClick={() => onAdd(item)}>
             <Icon name="plus" size={13} />
-            Add
+            <span>Add</span>
           </button>
           {onView ? (
             <button className="watcher-card-view" onClick={() => onView(item)} aria-label={`View ${item.title}`}>
               <Icon name="eye" size={14} />
-              View
+              <span>View</span>
             </button>
           ) : null}
           {inWatchlists.length ? (
