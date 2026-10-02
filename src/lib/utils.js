@@ -81,6 +81,11 @@ export function sortItems(items, option) {
       case 'year_asc': return (Number(a.year) || Infinity) - (Number(b.year) || Infinity) || fallback
       case 'rating_desc': return (Number(b.rating) || -Infinity) - (Number(a.rating) || -Infinity) || fallback
       case 'rating_asc': return (Number(a.rating) || Infinity) - (Number(b.rating) || Infinity) || fallback
+      case 'rank_asc': {
+        const rankA = a.rank != null ? Number(a.rank) : Infinity
+        const rankB = b.rank != null ? Number(b.rank) : Infinity
+        return rankA - rankB || compareDate(b.created_at, a.created_at) || fallback
+      }
       case 'created_desc':
       default: return compareDate(b.created_at, a.created_at) || fallback
     }

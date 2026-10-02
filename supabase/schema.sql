@@ -205,6 +205,7 @@ using ((select auth.uid()) = user_id);
 
 alter table public.watchlist_items add column if not exists runtime_minutes integer check (runtime_minutes is null or runtime_minutes >= 0);
 alter table public.watchlist_items add column if not exists episode_runtime_minutes integer check (episode_runtime_minutes is null or episode_runtime_minutes >= 0);
+alter table public.watchlist_items add column if not exists rank integer check (rank is null or rank >= 1);
 
 create index if not exists watchlist_items_watched_at_idx on public.watchlist_items(watched_at desc);
 

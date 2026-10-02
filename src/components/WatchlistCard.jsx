@@ -1,11 +1,29 @@
+import { useState, useEffect } from 'react'
 import Poster from './Poster'
 import { Icon } from './Icon'
 import { formatGenre, labelType, titleCaseText } from '../lib/utils'
 
-export default function WatchlistCard({ item, onDelete, onToggleStatus, onOpenDetails, busyId }) {
+export default function WatchlistCard({ item, onDelete, onToggleStatus, onOpenDetails, onUpdateRank, busyId }) {
   const busy = busyId === item.id
   const statusLabel = item.status === 'watched' ? 'Watched' : 'Unwatched'
   const genreText = formatGenre(item.genre)
+
+  const [rankVal, setRankVal] = useState(item.rank != null ? String(item.rank) : '')
+  
+  useEffect(() => {
+    setRankVal(item.rank != null ? String(item.rank) : '')
+  }, [item.rank])
+
+  const handleRankSubmit = () => {
+    if (rankVal === (item.rank != null ? String(item.rank) : '')) return
+    if (onUpdateRank) onUpdateRank(item, rankVal)
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.target.blur()
+    }
+  }
 
   return (
     <article className="watcher-saved-card">
@@ -22,6 +40,21 @@ export default function WatchlistCard({ item, onDelete, onToggleStatus, onOpenDe
         <div className="watcher-saved-meta">
           <span>{labelType(item.type)}</span>
           {item.year ? <span>{item.year}</span> : null}
+          <div className="watcher-ranking-control">
+            <span>Rank</span>
+            <input 
+              type="number" 
+              min="1" 
+              value={rankVal}
+              onChange={(e) => setRankVal(e.target.value)}
+              onBlur={handleRankSubmit}
+              onKeyDown={handleKeyDown}
+              disabled={busy}
+              placeholder="-" 
+              className="watcher-rank-input"
+              aria-label="Title Rank"
+            />
+          </div>
         </div>
         <div className="watcher-saved-genre">{genreText || 'Genre Not Added'}</div>
         <div className="watcher-saved-actions">

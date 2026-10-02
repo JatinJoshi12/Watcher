@@ -66,6 +66,7 @@ function PlaylistDropdown({ label, value, options, onChange }) {
 }
 
 const SORT_OPTIONS = [
+  { value: 'rank_asc', label: 'Sort by Ranking' },
   { value: 'created_desc', label: 'Recently Added' },
   { value: 'updated_desc', label: 'Recently Updated' },
   { value: 'title_asc', label: 'Title A-Z' },
@@ -173,6 +174,12 @@ export default function Watchlist({ onDelete, notify }) {
   const addSearchResult = async (item) => {
     setAddingId(`${item.type}-${item.tmdb_id}`)
     try {
+      let maxRank = 0;
+      for (const i of listItems) {
+        if (i.rank != null && i.rank > maxRank) maxRank = i.rank;
+      }
+      const nextRank = maxRank + 1;
+
       let details = null
       try { details = await getTitleDetails(item.tmdb_id, item.type) } catch { details = null }
       const result = await addCatalogItem([id], {
@@ -197,6 +204,7 @@ export default function Watchlist({ onDelete, notify }) {
         total_episodes: details?.total_episodes ?? null,
         total_seasons: details?.total_seasons ?? null,
         watched_at: null,
+        rank: nextRank,
       })
       notify?.(result.created.length ? `Added To ${titleCaseText(list.name)}.` : `Already In ${titleCaseText(list.name)}.`, result.created.length ? 'success' : 'info')
       setSearchResults((current) => current.filter((entry) => `${entry.type}-${entry.tmdb_id}` !== `${item.type}-${item.tmdb_id}`))
@@ -204,6 +212,46 @@ export default function Watchlist({ onDelete, notify }) {
       notify?.(error.message || 'Unable To Add Title.', 'error')
     } finally {
       setAddingId(null)
+    }
+  }
+
+  const updateRank = async (item, newRankStr) => {
+    let newRank = newRankStr ? parseInt(newRankStr, 10) : null;
+    if (newRank !== null && (isNaN(newRank) || newRank < 1)) newRank = null;
+    if (newRank === item.rank) return;
+    
+    setBusyId(item.id)
+    try {
+      const otherRanked = listItems.filter(i => i.rank != null && i.id !== item.id).sort((a, b) => a.rank - b.rank);
+      
+      if (newRank !== null) {
+         const maxPossibleRank = otherRanked.length + 1;
+         if (newRank > maxPossibleRank) newRank = maxPossibleRank;
+      }
+      
+      const updates = [];
+      updates.push({ id: item.id, rank: newRank });
+      
+      let currentRank = 1;
+      for (const i of otherRanked) {
+         if (currentRank === newRank) {
+            currentRank++;
+         }
+         if (i.rank !== currentRank) {
+            updates.push({ id: i.id, rank: currentRank });
+         }
+         currentRank++;
+      }
+
+      for (const u of updates) {
+         await updateItem(u.id, { rank: u.rank });
+      }
+      
+      notify?.('Ranking Updated.', 'success')
+    } catch (error) {
+      notify?.(error.message || 'Unable To Update Ranking.', 'error')
+    } finally {
+      setBusyId(null)
     }
   }
 
@@ -305,7 +353,7 @@ export default function Watchlist({ onDelete, notify }) {
         </div>
 
         {results.length ? (
-          <WatchlistGrid items={results} onDelete={onDelete} onToggleStatus={toggleStatus} onToggleFavorite={() => {}} onOpenDetails={(item) => setViewTarget(item)} busyId={busyId || addingId} />
+          <WatchlistGrid items={results} onDelete={onDelete} onToggleStatus={toggleStatus} onToggleFavorite={() => {}} onOpenDetails={(item) => setViewTarget(item)} onUpdateRank={updateRank} busyId={busyId || addingId} />
         ) : (
           <div className="watcher-watchlist-empty">
             <Icon name="play" size={24} />

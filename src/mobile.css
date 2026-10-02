@@ -221,4 +221,9 @@
   .watcher-saved-title {
     font-size: 12px !important;
   }
+}
 
+@media (max-width: 768px) {
+  .watcher-saved-meta { flex-wrap: wrap; align-items: center; gap: 4px; }
+  .watcher-ranking-control { margin-left: 0 !important; margin-top: 4px; }
+}
