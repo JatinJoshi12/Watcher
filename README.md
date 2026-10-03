@@ -43,7 +43,7 @@ Run `supabase/schema.sql` in the Supabase SQL Editor. Keep Row Level Security en
 
 ## TMDB
 
-The application uses TMDB for in-site movie/TV discovery, upcoming releases, trending titles, and recent trailers/teasers.
+The application uses TMDB for in-site movie/TV discovery, upcoming releases, trending titles, and recent trailers/teasers .
 
 ## Included Background Assets
 
